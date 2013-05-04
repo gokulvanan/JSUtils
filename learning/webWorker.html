@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script type="text/javascript" src="/package/jsonUtils.js"></script>
+	<script type="text/javascript" src="/package/executor.js"></script>
+</head>
+<body>
+
+<div ="newDiv">
+	data to be updated by worker
+</div>
+<div ="newDiv2">
+	data to be updated by worker
+</div>
+
+<script>
+ 
+ var contentDiv1 =" New Div1 content";
+ var contentDiv2 =" New Div2 content";
+
+ var guiCallback=function(data){
+ 	var div="newDiv";
+ 	if(data == " New Div2 content") div="newDiv2";
+ 	document.getElementById(div).html(data);
+ }
+ new Executor("/package/businessWorker.js").execute(contentDiv2,guiCallback);
+ new Executor("/package/businessWorker.js").execute(contentDiv2,guiCallback);
+</script>
+
+</body>
+</html>
+
