@@ -32,6 +32,7 @@
     var totalWidth=0;
     var hideableCols = new Array(), hiddenCols = new Array();
     var colSpanSize=0;
+    var scrollBarPadding=14; // added to provide padding to last header column for scrollbar
     // var plusPatt = /icon-plus/;
     // var minusPatt = /icon-minus/;
     // plusPatt.compile();
@@ -50,36 +51,35 @@
         var $div = $("#"+t.selector);
         // console.log($div);
         $div.css("overflow-y:auto;");
-  //    positionDiv($div,opts.width,opts.innerHeightght,$(window).innerWidth(),$(window).innerHeight());
-        // $(window).bind("resize", function(){
-        //  positionDiv($div,opts.width,opts.height,$(window).innerWidth(),$(window).innerHeight());
-  //    });
+ 
 
 
         //build gridHeader
         var table = new Array();
-        table.push('<table class="table table table-bordered table-striped ">');
+        table.push('<table id="head" class="table table table-bordered table-striped" style="margin-bottom:0px;">');
         buildHeader(table,opts);
+        table.push('</table>');
+        var $head = $(table.join(""));
+        console.log($head);
+        $div.append($head);
+        var ht = $window.innerHeight()*opts.height;
+        var $bodyDiv = $('<div id="respoGridBody" style="top:0px;overflow-y:scroll;height:'+ht+'px"></div>');
+
+        table = new Array();
+        table.push('<table id="body" class="table table table-bordered table-striped ">');
         buildBody(table,opts);
         table.push('</table>');
-        // console.log(table.join(""));
         var $table = $(table.join(""));
         
-        //$table.footable(); // trigger footable mapping for responsiveness
-        // $div.html(table.join(""));
         $(window).bind("resize", function(){ setTimeout(function(){resize($table,opts);},100)});//delay to prevent overload for frequent resizes
-        $div.append($table);
+        $bodyDiv.append($table);
+        $div.append($bodyDiv);
         $("a.respo_expand",$table).bind("click",function(event){ event.preventDefault(); showDetails(this);});
         $("a.respo_minimize",$table).bind("click",function(event){ event.preventDefault();  hideDetails(this);});
         resize($table,opts);
     };
 
-    /*
-        TODO: Need to add minus icon alos hidden and present during table creation itself. 
-        as changing class doesnt seem to render it.. need to check this 
-        need to build a description row and remove description row 
-        need to bind resize to keep reset plus-minus toggle if any before resize
-    */
+    
     function showDetails(elm){
         var $elm = $(elm);
         $elm.hide();
@@ -162,6 +162,7 @@
                 if(totalWidth <= windowWidth) break;
             }  
         }
+        
         $("a.respo_minimize",$table).hide();
         $("tr.respo_details_row",$table).remove();
         if(hiddenCols.length === 0) $("a.respo_expand",$table).hide();
@@ -191,7 +192,7 @@
     		table.push("<tr id='"+id+"' class='mainRow'>");
     		for(var j=0; j<opts.colDefs.length; j++){
     			var def = opts.colDefs[j];
-    			table.push("<td class='"+def.name+"'>");
+    			table.push("<td class='"+def.name+"' style='width:"+def.minWidth+"px;'>");
                 if(def.main){
                   table.push("<a href='#' class='respo_expand icon-plus-sign' style='display:none;' >&nbsp;</a>");
                   table.push("<a href='#' class='respo_minimize icon-minus-sign' style='display:none;' >&nbsp;</a>&nbsp;")  
@@ -210,13 +211,22 @@
     	table.push("<tr class='mainHeaderRow'>");
     	for(var i=0; i<opts.colDefs.length; i++){
     		var def = opts.colDefs[i];
-            totalWidth += def.minWidth;
-
-            // if(def.hideable)hideableCols.push({"index":i, "colDef":def
+            var wt =  def.minWidth;
+            var flag="";
+            if(i == opts.colDefs.length-1){
+                wt +=scrollBarPadding;
+                def.scrollBarPadded=true;// flag to identify this colum is scorllBarPadded
+            }
+            totalWidth += wt;
             if(def.hideable)hideableCols.push(def);
-            table.push('<th class="btn-inverse '+def.name+'" style="width:'+def.minWidth+'px;"');
+            table.push('<th class="btn-inverse '+def.name+'" style="width:'+wt+'px;"');
     		table.push('>');
   			table.push(def.label);
+            if(def.sort){
+                console.log("here")
+                table.push("<a href='#' id='"+def.name+"_asc' class=' icon-up-arrow icon-white' >&nbsp;</a>" );
+                table.push("<a href='#' id='"+def.name+"_desc' class='icon-down-arrow icon-white' style='display:none'>&nbsp;</a>" );
+            } 
 			table.push('</th>');
     	}
     	table.push("</tr>");
@@ -224,18 +234,9 @@
         hideableCols.sort(compareColDef); // sort by minWidth desc
     }
 
-    function positionDiv($div,width,height,windowWidth,windowHeight){
-    		// $div.css("width",function(){return getPercentVal(windowWidth,width)});
-			$div.css("height",function(){return getPercentVal(windowHeight,height)});
-	}
-
-    function getPercentVal(val,percent){
-    	return (val*percent);
-    }
-
+    
     function _validate(){
 
-        // check for colNames to match colDefs
         // check for mandatory colDef Params .. minWidth and name
     	return null;
     }

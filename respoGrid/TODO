@@ -1,0 +1,8 @@
+TODO
+
+1)Scroll capabiliy -WIP
+	- need to figure out how to dymanically change sorrting padding to each last vissible column so that header remains alligned with body of the table
+2) Sorting
+3) Pagination
+4) Code cleanup 
+4)AJAX JSON load (pagination+sorting)

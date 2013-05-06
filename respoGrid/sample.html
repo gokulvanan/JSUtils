@@ -5,91 +5,9 @@
   <meta name="viewport" content = "width = device-width, initial-scale = 1.0, minimum-scale = 1.0, maximum-scale = 1.0, user-scalable = no" />
   <link href="bootstrap/css/bootstrap.css" rel="stylesheet" type="text/css" />
   <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet" type="text/css" />
-  
+   <link href="css/respo.grid.css" rel="stylesheet" type="text/css" />
   <style type="text/css">
-	body { margin:15px; }
-	fieldset{
- 		 color: #000000;
-	}
 	
-	.respo_details_backdrop{
-		 /*margin-top:5px;*/
-		  font-size: 12px;
-		  /*font-weight: bold;*/
-		   color: #000000;
-		  background-color: #eeeeee;
-
-	}
-	.graybackdrop{
-		 margin-top:5px;
-		  font-size: 14px;
-		  font-weight: bold;
-		   color: inherit;
-		  background-color: #eeeeee;
-		  border: 1px solid #000000;
-		  -webkit-border-radius: 6px;
-		     -moz-border-radius: 6px;
-		          border-radius: 6px;
-	}
-	.yellowbackdrop{
-		   margin-top:5px;
-		  font-size: 12px;
-		  background-color: #FFFF99;
-		  border: 1px solid #999900;
-		  -webkit-border-radius: 6px;
-		     -moz-border-radius: 6px;
-		          border-radius: 6px;
-	}
-
-	.bluebackdrop{
-		   margin-top:5px;
-		  font-size: 12px;
-		  background-color: #E7F0FB;
-		  border: 1px solid #000000;
-		  -webkit-border-radius: 6px;
-		     -moz-border-radius: 6px;
-		          border-radius: 6px;
-	}
-
-	.pagination {
- 		 margin: 5px 0;
-	}
-	.floatingHeader {
-      position: relative;
-      top: 0;
-      z-index: 200;
-      /*visibility: ;*/
-    }
-    /*override bootstrap settings for tablebordered*/
-  .table th{
-  padding: 8px;
-  line-height: 20px;
-  text-align: center;
-  vertical-align: middle;
-  border-top: 1px solid #dddddd;
-}
-
-	div.respoGrid {
-   /* background: $bgcolor;
-    border: 1px solid $bgcolor;*/
-    display: inline-block;
-    height: 400px;
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-    /*padding: ($rowHeight + ($cellPadding * 2)) 0;*/
-    
-    table { position: static; }
-    thead, tfoot { position: absolute; z-index: 1   }
-    thead { left: 0; top: 0; }
-    tfoot { left: 0; bottom: 0; }
-    tbody { 
-        display: block;
-        position: relative; overflow-y: scroll;
-        height: 200px;
-        width: 100%;
-    }
-}
  
 	</style>
   
@@ -99,11 +17,11 @@
   
   <script type="text/javascript">
     $(function() {
-		// $('table').footable();
+		
 	  $("tableDiv").respoTable({
 	  	colNames:["First Name","Last Name","Job Title","DOB","Status"],
 	  	colDefs:[
-	  	{name:"firstname", 	label:"First Name", minWidth:100, main:true},
+	  	{name:"firstname", 	label:"First Name", minWidth:100, main:true, sort:true},
 	  	{ name:"lastname",  label:"Last Name",  minWidth:500, hideable:true},
 	  	{ name:"job", 	    label:"Job Title", 	minWidth:300, hideable:true },
 	  	{ name:"dob", 		label:"DOB",		minWidth:100, hideable:true },
@@ -116,7 +34,13 @@
 	  	{"id":5,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
 	  	{"id":6,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
 	  	{"id":7,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
-	  	{"id":8,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"}]
+	  	{"id":8,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
+	  	{"id":9,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
+	  	{"id":10,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
+	  	{"id":11,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
+	  	{"id":12,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
+	  	{"id":13,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
+	  	{"id":14,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"}]
 	  });
 		
     });
@@ -158,7 +82,7 @@
 
 
 			<div id="tableDiv" class="respoGrid">
-			<!-- 	<table class="table table table-bordered table-hover table-striped">
+				<!-- <table class="table table table-bordered table-hover table-striped">
 					<thead>
 						<tr>
 							<th class="btn-inverse firstname" style="width:100px;">First Name</th>
@@ -168,6 +92,9 @@
 							<th class="btn-inverse Status" style="width:400px;">Status</th>
 						</tr>
 					</thead>
+				</table>
+				<div style="top:0px;overflow-y:auto;">
+					<table class="table table table-bordered table-hover table-striped">
 					<tbody>
 						<tr id='1'>
 							<td class='firstname'>test</td>
@@ -226,9 +153,9 @@
 							<td class='status'>Active</td>
 						</tr>
 					</tbody>
-				</table>  -->
-
-			</div>
+				</table> 
+			</div> -->
+		</div>
 		
 		
 	</div>
