@@ -1,8 +1,11 @@
 TODO
 
-1)Scroll capabiliy -WIP
-	- need to figure out how to dymanically change sorrting padding to each last vissible column so that header remains alligned with body of the table
-2) Sorting
-3) Pagination
-4) Code cleanup 
-4)AJAX JSON load (pagination+sorting)
+1)Scroll capabiliy -Done
+	- minor issue in body col alignment.. need to fix the same
+2) Sorting - Done
+3) Pagination - Done
+4) Code cleanup and performance chagnes - TODO 
+5) Optional Action Buttons to be integrated to grid - TODO
+6) Optional Search Div to be integrated with grid - TODO
+7) Helper functions for formatting to be added - TODO
+4)AJAX JSON load (pagination+sorting) - TODO
