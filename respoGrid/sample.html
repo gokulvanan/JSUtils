@@ -3,50 +3,15 @@
 <head>
   <title>RespGrid</title>
   <meta name="viewport" content = "width = device-width, initial-scale = 1.0, minimum-scale = 1.0, maximum-scale = 1.0, user-scalable = no" />
-  <link href="bootstrap/css/bootstrap.css" rel="stylesheet" type="text/css" />
-  <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet" type="text/css" />
-   <link href="css/respo.grid.css" rel="stylesheet" type="text/css" />
-  <style type="text/css">
-	
- 
-	</style>
+  <link href="css/lib/bootstrap.css" rel="stylesheet" type="text/css" />
+  <link href="css/lib/bootstrap-responsive.css" rel="stylesheet" type="text/css" />
+  <link href="css/respo.grid.css" rel="stylesheet" type="text/css" />
   
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js" type="text/javascript"></script>
-  <script src="bootstrap/js/bootstrap.js" type="text/javascript"></script>
-  <script src="js/respo.grid.js" type="text/javascript"></script>
-  
-  <script type="text/javascript">
-    $(function() {
-		
-	  $("tableDiv").respoTable({
-	  	colNames:["First Name","Last Name","Job Title","DOB","Status"],
-	  	colDefs:[
-	  	{name:"firstname", 	label:"First Name", minWidth:100, main:true, sort:true},
-	  	{ name:"lastname",  label:"Last Name",  minWidth:500, hideable:true},
-	  	{ name:"job", 	    label:"Job Title", 	minWidth:300, hideable:true },
-	  	{ name:"dob", 		label:"DOB",		minWidth:100, hideable:true,  sort:true },
-	  	{ name:"status", 	label:"Status",		minWidth:400, hideable:true }
-	  	],
-	  	data:[{"id":1,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
-	  	{"id":2,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
-	  	{"id":3,"firstname":"test","lastname":"sd","job":"sdweed","dob":"25-Jul-1986", "status":"Active"},
-	  	{"id":4,"firstname":"test","lastname":"sd","job":"sdweed","dob":"23-Jul-1986", "status":"Active"},
-	  	{"id":5,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
-	  	{"id":6,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
-	  	{"id":7,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
-	  	{"id":8,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
-	  	{"id":9,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
-	  	{"id":10,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
-	  	{"id":11,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
-	  	{"id":12,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
-	  	{"id":13,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
-	  	{"id":14,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"}],
-	  	sortCol:"dob",
-	  	sortDir:"desc"
-	  });
-		
-    });
-  </script>
+  <script src="js/lib/jquery-1.7.2.min.js" type="text/javascript"></script>
+  <script src="js/lib/bootstrap.min.js" type="text/javascript"></script>
+  <script data-main="js/utils/initialize.js" src="js/lib/require.js"></script>
+  <script type="text/javascript" src="js/sample.js"></script>
+
 </head>
   <body>
 
@@ -64,8 +29,15 @@
 				<p> Notification Message here</p>
 			</div>
 			
-			<div  class=" pagination pagination-small pagination-centered row">
-			<div id="actions" class="pull-left"><p>Excel Print</p></div>
+			
+			<!-- <div  class=" pagination pagination-small pagination-centered row">
+			<div id="rowsPerPage_div" class="pull-left">
+				<label>Rows Per page: 
+					<input type="radio" id='row_opt' name="row" value="10" checked="selected"> 10 </input>
+					<input type="radio" id='row_opt' name="row" value="20"> 20 </input>
+					<input type="radio" id='row_opt' name="row" value="30"> 30 </input>
+			</label>
+			</div>
 			<ul>
 			    <li><a href="#">Prev</a></li>
 			    <li><a href="#">1</a></li>
@@ -81,7 +53,7 @@
 					<button id="delete" class="btn-danger btn-small">Delete</button>
 				</div>	  
 			</div>
-
+ -->
 
 			<div id="tableDiv" class="respoGrid">
 				<!-- <table class="table table table-bordered table-hover table-striped">

@@ -9,12 +9,12 @@ define(function () {
 
 	var defaults = { //TODO add defaults
         "divId":null,
-        "colDefs":[],
-        "width":0.985,
-        "height":0.5,
-        "localData":[],
-        "tableId":"respoTable"
-    }
+		"colDefs":[],
+		"width":0.985,
+		"height":0.5,
+		"localData":[],
+		"tableId":"respoTable"
+	}
     //Global variables
     var debug=true; // added to switch on and off logging
     var widthMap={};// map that holds width of each cols as they change -- used in rebuilding body during pagination and sorting
@@ -24,8 +24,7 @@ define(function () {
     var scrollBarPadding=14; // added to provide padding to last header column for scrollbar
    
 
-    function init (options) {
-        // console.log("Here");
+	function init (options) {
         options = options || {};
         var opts = $.extend(true, {}, defaults, options); //merge user and default options
         
@@ -37,11 +36,8 @@ define(function () {
         var divId= opts.divId;
         var $div = $("#"+divId);
         // log($div);
-        // $div.css("overflow-y:auto;");
-
-        // console.log("HERE");
-        // console.log(opts);
-    
+        $div.css("overflow-y:auto;");
+ 
         // helper utility function used in pagination
         opts.getTotalPages = function(){
             var total = this.localData.length;
@@ -66,7 +62,7 @@ define(function () {
             var dir = (opts.sortDir === 'desc') ? 'desc' : 'asc'; 
             opts.localData.sort(function(a,b){ return sort(a,b,opts.sortCol,dir)});
         }
-        console.log(opts);
+
         //set data based on rowsPerPage
         opts.data = getData(opts);
         
@@ -389,41 +385,40 @@ define(function () {
         }
         return false;
     }
-    
     function buildBody(table,opts,rebuildFlag){
-        table.push('<tbody>');
+    	table.push('<tbody>');
         // console.log(hiddenCols);
-        for(var i=0; i<opts.data.length; i++){
-            var row = opts.data[i];
-            var id = i;
-            table.push("<tr id='"+id+"' class='mainRow'>");
-            for(var j=0; j<opts.colDefs.length; j++){
-                var def = opts.colDefs[j];
+    	for(var i=0; i<opts.data.length; i++){
+    		var row = opts.data[i];
+    		var id = i;
+    		table.push("<tr id='"+id+"' class='mainRow'>");
+    		for(var j=0; j<opts.colDefs.length; j++){
+    			var def = opts.colDefs[j];
                 var align = (def.align) ? def.align : "left";
                 var width = (rebuildFlag)? widthMap[def.name] :def.minWidth;
                 var hide = (isHidden(def.name)) ? "display:none;" : "";
                 // var hide ="";
-                table.push("<td class='"+def.name+"' style='width:"+width+"px;text-align:"+align+";"+hide+"'>");
+    			table.push("<td class='"+def.name+"' style='width:"+width+"px;text-align:"+align+";"+hide+"'>");
                 if(def.main){
                   table.push("<a href='#' class='respo_expand icon-plus-sign' style='display:none;' >&nbsp;</a>");
                   table.push("<a href='#' class='respo_minimize icon-minus-sign' style='display:none;' >&nbsp;</a>&nbsp;")  
                 } 
                 table.push("<span id='respo_content_"+def.name+"'>");
-                table.push((def.format)? def.format(row[def.name]) : row[def.name]);
+				table.push((def.format)? def.format(row[def.name]) : row[def.name]);
                 table.push("</span>");
-                table.push("</td>");
-            }
-            table.push("</tr>");
-        }
-        table.push('</tbody>');                 
+    			table.push("</td>");
+    		}
+    		table.push("</tr>");
+    	}
+		table.push('</tbody>');					
     }
 
     function buildHeader(table,opts){
         // log(totalWidth)
-        table.push("<thead>");
-        table.push("<tr class='mainHeaderRow'>");
-        for(var i=0; i<opts.colDefs.length; i++){
-            var def = opts.colDefs[i];
+    	table.push("<thead>");
+    	table.push("<tr class='mainHeaderRow'>");
+    	for(var i=0; i<opts.colDefs.length; i++){
+    		var def = opts.colDefs[i];
             var wt =  def.minWidth;
             var flag="";
             if(i == opts.colDefs.length-1){
@@ -433,18 +428,18 @@ define(function () {
             totalWidth += wt;
             if(def.hideable)hideableCols.push(def);
             table.push('<th class=" btn-inverse '+def.name+'" style="width:'+wt+'px;" >');
-            
-            table.push(def.label);
+    		
+  			table.push(def.label);
             
             if(def.sort){
                 var hideAsc="",hideDesc="";
                 table.push("&nbsp;&nbsp;<span><a href='#' id='"+def.name+"_asc' class='respo_sort_up icon-chevron-up icon-white'  "+hideAsc+">&nbsp;</a>" );
                 table.push("<a href='#' id='"+def.name+"_desc' class='respo_sort_down icon-chevron-down icon-white ' "+hideDesc+">&nbsp;</a>" );
             } 
-            table.push('</th>');
-        }
-        table.push("</tr>");
-        table.push("</thead>");
+			table.push('</th>');
+    	}
+    	table.push("</tr>");
+    	table.push("</thead>");
 
         hideableCols.sort(function(a,b){ return sort(a,b,"minWidth","asc");}); // sort by minWidth desc
     }
@@ -460,7 +455,7 @@ define(function () {
 
         // check for mandatory colDef Params .. minWidth and name
         //check if rowsPerPage opt is put if opts are given
-        return null;
+    	return null;
     }
 
     function log(obj){
@@ -471,7 +466,7 @@ define(function () {
     }
 
     return{
-        init: function(){console.log("here");} // initialize respoTable
+        init: init // initialize respoTable
     }
 
 

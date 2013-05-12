@@ -60,6 +60,38 @@ body { margin:15px; }
   border-top: 1px solid #dddddd;
 }
 
+	select.respo{
+	/*width: 50px;
+	font-size: 12px;
+ 	font-weight: normal;
+  	/*line-height: 20px;*/
+  	/*display: inline-block;*/
+  	background-color: :#FFF;
+  	height: 18px;
+  	padding: 0px 0px;
+  	margin-bottom: 0px;
+  	color: #555555;
+  	vertical-align: middle;
+  -webkit-border-radius: 0px;
+     -moz-border-radius: 0px;
+          border-radius: 0px;
+*/
+
+	}
+
+
+	select.respo_curr_page{
+		background: transparent;
+		width: 25px;
+		vertical-align: middle;
+		padding: 0px;
+		border: 0;
+		border-radius: 0;
+		font-size: 12px;
+		line-height: 1;
+		height: 18px;
+		-webkit-appearance: none;
+	}
 	/*div.respoGrid {*/
    /* background: $bgcolor;
     border: 1px solid $bgcolor;*/
