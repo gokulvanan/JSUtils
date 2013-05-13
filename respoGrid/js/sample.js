@@ -50,7 +50,7 @@ require(['respo.grid'],function(gridObj) {
 	}
 
 	$(document).ready(function(){
-		gridObj.init(config);
+		gridObj.getInstance(config);
 	});
 
 });	

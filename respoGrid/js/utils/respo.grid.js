@@ -13,7 +13,10 @@ define(function () {
 		"width":0.985,
 		"height":0.5,
 		"localData":[],
-		"tableId":"respoTable"
+		"source":"local",// ajax 
+        "paramNames":{"page":"page","rowsPerPage": "rowsPerPage","sortCol":"sortCol","sortDir":"sortDir","total":"total","data":"data"},
+        "getList":null // function called during AJAX load input args contains params of gird , output json with total and data fields
+
 	}
     //Global variables
     var debug=true; // added to switch on and off logging
@@ -24,7 +27,7 @@ define(function () {
     var scrollBarPadding=14; // added to provide padding to last header column for scrollbar
    
 
-	function init (options) {
+	function getInstance (options) {
         options = options || {};
         var opts = $.extend(true, {}, defaults, options); //merge user and default options
         
@@ -40,7 +43,7 @@ define(function () {
  
         // helper utility function used in pagination
         opts.getTotalPages = function(){
-            var total = this.localData.length;
+            var total = (this.source==="local") ? this.localData.length : ((this.total)? this.total : this.data.length);
             var rowsPerPage = this.rowsPerPage
             return (total % opts.rowsPerPage == 0) ? (total/opts.rowsPerPage) : parseInt((total/opts.rowsPerPage)) + 1;
         }
@@ -56,12 +59,44 @@ define(function () {
         
         var ht = $window.innerHeight()*opts.height;
         var $bodyDiv = $('<div id="respoGridBody_'+divId+'" style="top:0px;overflow-y:scroll;height:'+ht+'px;border-bottom:1px solid #eee;"></div>');
-        
-        // onload default sort
-        if (opts.sortCol) {
-            var dir = (opts.sortDir === 'desc') ? 'desc' : 'asc'; 
-            opts.localData.sort(function(a,b){ return sort(a,b,opts.sortCol,dir)});
+
+        //TODO Correct the bug in loading function
+        // loading div to show timer 
+        var loadingDiv=$("<div id='respo_loading_"+opts.divId+"' class='icon icon-large incon-spinner icon-spin' style='display:none;'></div>");
+        $div.append(loadingDiv);
+        opts.showLoadingDiv = function(){
+            var parentDiv = $("div#"+divId);
+            $(loadingDiv).css({
+            // "position":"relative",
+            "top": "0px",
+            "left": "0px",
+            "width": "100%",
+            "height": "100%",
+            "z-index": 500,
+             });
+            $(loadingDiv).show();
         }
+        opts.hideLoadingDiv = function(){
+            $(loadingDiv).hide();
+        }
+        // console.log("Show loading called");
+        // opts.showLoadingDiv();
+        console.log(opts.paramNames);
+        // onload default sort
+        if (opts.source === "local" ) {
+            if(opts.sortCol){
+                var dir = (opts.sortDir === 'desc') ? 'desc' : 'asc'; 
+            opts.localData.sort(function(a,b){ return sort(a,b,opts.sortCol,dir)});    
+            }
+        }else{
+            //set Params for ajax call
+            // console.log(opts.paramNames);
+            opts.params[opts.paramNames["page"]]=opts.page;
+            opts.params[opts.paramNames["rowsPerPage"]]=opts.rowsPerPage;
+            opts.params[opts.paramNames["sortCol"]]=opts.sortCol;
+            opts.params[opts.paramNames["sortDir"]]=opts.sortDir;
+        }
+
 
         //set data based on rowsPerPage
         opts.data = getData(opts);
@@ -89,7 +124,20 @@ define(function () {
         // initCaptionHandlers($caption);
         // initSort($head);
         resize($table,opts);
+        return{
+            search: function(params){
+                params = (params) ? opts.params : params;
+                search(params,opts);
+                return this;
+            }
+        }
     };
+
+   
+    function search(params,opts){
+        //search from local data
+        //resort and rebuild grid
+    }
 
     // TODO from pagnButtonClick
     function pagnButtonClick(elm,opts,$caption,divId){
@@ -134,10 +182,16 @@ define(function () {
     }
 
     function getData(opts){
-        var i = (opts.page -1) * opts.rowsPerPage;
-        var j = ((i+opts.rowsPerPage) < opts.localData.length) ? i+opts.rowsPerPage : opts.localData.length;
-        console.log(i+"_"+j);
-        return opts.localData.slice(i,j);
+        if(opts.source === 'local'){
+            var i = (opts.page -1) * opts.rowsPerPage;
+            var j = ((i+opts.rowsPerPage) < opts.localData.length) ? i+opts.rowsPerPage : opts.localData.length;
+            console.log(i+"_"+j);
+            return opts.localData.slice(i,j);
+        }else{
+           var json = opts.getList(opts.params);
+           opts.total=json[opts.paramNames["total"]];// TODO check need for retriving page and rowsPerpage 
+           return json[opts.paramNames["data"]];
+        } 
     }
 
     function buildCaption(opts){
@@ -223,13 +277,20 @@ define(function () {
     
   
     function sortCol(elm,opts,divId){
-      var data = opts.localData;
+      
       var tableBody = $("table#body_"+divId);
       var col = $(elm).attr("id").split("_");
-      data.sort(function(a,b){return sort(a,b,col[0],col[1])});
-       // log("sortCol data "+data.toString());
       removeDetailsWindow();
+      if(opts.source === "local"){
+        var data = opts.localData;
+        data.sort(function(a,b){return sort(a,b,col[0],col[1])});  
+      }else{ // ajax call
+        opts.params[opts.paramNames["sortCol"]]=col[0]; // update params used in making getListReq
+        opts.params[opts.paramNames["sortDir"]]=col[1]; // update params used in making getListreq
+      }
+      
       opts.data = getData(opts);
+      
       updateGrid(opts,tableBody);
     }
 
@@ -368,7 +429,7 @@ define(function () {
     function reBuildBody(opts,divId){
         // console.log(opts);
         var $table = $("table#body_"+divId);
-        $table.html("Loading... ");
+        // $table.html("Loading... ");
         var table = new Array();
         buildBody(table,opts,true);
         $table.html(table.join(""));
@@ -466,7 +527,7 @@ define(function () {
     }
 
     return{
-        init: init // initialize respoTable
+        getInstance: getInstance // initialize respoTable
     }
 
 
