@@ -40,8 +40,8 @@ require(['respo.grid'],function(gridObj) {
 		  	pageOpts:[10,20,30],
 		  	page:1,
 		  	rowsPerPage:10,
-		  	actions:[{name:"add", label:"Add", icon:"icon-plus", action:function(){ console.log("Add action called");}},
-			{name:"delete", label:"Delete", icon:"icon-minus", action:function(){ console.log("Delete action called");}},
+		  	actions:[{name:"add", label:"Add", loading:"Adding...", icon:"icon-plus", action:function(){ console.log("Add action called");}},
+			{name:"delete", label:"Delete", loading:"Deleting...", icon:"icon-minus", action:function(){ console.log("Delete action called");}},
 		  	]
 	  };
 

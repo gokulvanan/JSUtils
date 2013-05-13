@@ -113,6 +113,9 @@ define(function () {
         $bodyDiv.append($table);
         $div.append($bodyDiv);
         $div.prepend($caption);// add caption before table
+
+        if(opts.actions) initializeButtonActions($caption,opts.actions);
+
         $("a.respo_expand",$table).bind("click",function(event){ event.preventDefault(); showDetails(this);});
         $("a.respo_minimize",$table).bind("click",function(event){ event.preventDefault();  hideDetails(this);});
         $("a.respo_sort_up",$head).bind("click",function(event){ event.preventDefault(); sortCol(this,opts,divId);});
@@ -139,6 +142,14 @@ define(function () {
         //resort and rebuild grid
     }
 
+    function initializeButtonActions($caption, opts){
+        $("button.btn",$caption).bind("click",function(){
+            console.log("action called");
+            // disable button
+            // carry out custom action
+            //enable button
+        });
+    }
     // TODO from pagnButtonClick
     function pagnButtonClick(elm,opts,$caption,divId){
         // console.log($(elm).is("select"));
@@ -235,7 +246,10 @@ define(function () {
         var actions = new Array();
         actions.push('<div id="respo_actions" class="pull-right" style="margin-right:10px;">');
         for(var i=0,len=acts.length; i<len; i++){
-            actions.push('<button id="'+acts[i].name+'" class="btn-danger btn-small">'+acts[i].label+'</button>');
+            actions.push('<button id="'+acts[i].name+'" class="btn btn-danger btn-small" data-loading-text="'+acts[i].loading+'">');
+            actions.push("<i class='icon "+acts[i].icon+"'> </i>&nbsp;")
+            actions.push(acts[i].label);
+            actions.push('</button>');
         }
         actions.push('  </div> ');
         return actions.join(" ");
