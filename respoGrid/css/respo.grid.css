@@ -34,12 +34,8 @@ body { margin:15px; }
 
 	.bluebackdrop{
 		   margin-top:5px;
-		  font-size: 12px;
-		  background-color: #E7F0FB;
-		  border: 1px solid #000000;
-		  -webkit-border-radius: 6px;
-		     -moz-border-radius: 6px;
-		          border-radius: 6px;
+		  font-size: 14px;
+		  background-color: #d9edf7;
 	}
 
 	.pagination {
@@ -87,9 +83,9 @@ body { margin:15px; }
 		padding: 0px;
 		border: 0;
 		border-radius: 0;
-		font-size: 12px;
+		
 		line-height: 1;
-		height: 18px;
+		height: 20px;
 		-webkit-appearance: none;
 	}
 	/*div.respoGrid {*/

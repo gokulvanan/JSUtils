@@ -4,11 +4,13 @@ TODO
 -Scroll capabiliy -DONE
 - Sorting - DONE
 - Pagination - DONE
-- Loding GIF - WIP
-- AJAX JSON load (pagination+sorting) -WIP
-- Action Button integration
-- Search integration
-- sort button font changes
+- AJAX JSON load (pagination+sorting) -DONE
+- Action Button integration - DONE
+- Loding GIF - TO DO
+- Search integration - Done // TODO add local search case
+- LoadOnce/LoadOnSearch options
+- Alignment issue with columns due to width Map issue.. use differnt logic in resize for totalwidth
+- sort button font changes 
 - performance check
 - Code cleanup 
 -
