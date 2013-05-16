@@ -1,17 +1,5 @@
-
-require(['respo.grid'],function(gridObj) {
-
-	var config={  	
-			divId:"tableDiv",
-		  	colDefs:[
-		  	{ name:"id", 		label:"<input type='checkbox' id='selectAll' />", format:checkbox, align:"center", minWidth:50},
-		  	{ name:"firstname", label:"First Name", minWidth:120, sort:true , main:true},
-		  	{ name:"lastname",  label:"Last Name",  minWidth:500, hideable:true, sort:true},
-		  	{ name:"job", 	    label:"Job Title", 	minWidth:300, hideable:true, sort:true },
-		  	{ name:"dob", 		label:"DOB",		minWidth:100, hideable:true,  sort:true },
-		  	{ name:"status", 	label:"Status",		minWidth:100, sort:true }
-		  	],
-		  	localData:[{"id":1,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
+{
+	"data":[{"id":1,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
 		  	{"id":2,"firstname":"sdsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
 		  	{"id":3,"firstname":"test","lastname":"sd","job":"sdweed","dob":"25-Jul-1986", "status":"Inactive"},
 		  	{"id":4,"firstname":"gokul","lastname":"velan","job":"software","dob":"23-Jul-1986", "status":"Deleted"},
@@ -35,24 +23,5 @@ require(['respo.grid'],function(gridObj) {
 		  	{"id":23,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
 		  	{"id":24,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"},
 		  	{"id":25,"firstname":"test","lastname":"sd","job":"sdweed","dob":"24-Jul-1986", "status":"Active"}],
-		  	sortCol:"firstname",
-		  	sortDir:"asc",
-		  	pageOpts:[10,20,30],
-		  	page:1,
-		  	rowsPerPage:10,
-		  	actions:[{name:"add", label:"Add", loading:"Adding...", icon:"icon-plus", action:function(){ console.log("Add action called");}},
-			{name:"delete", label:"Delete", loading:"Deleting...", icon:"icon-minus", action:function(){ console.log("Delete action called");}},
-		  	]
-	  };
-
-	function checkbox(val){
-		return "<input type='checkbox' id='select' name='select' value='"+val+"'/>";
-	}
-
-	$(document).ready(function(){
-		gridObj.getInstance(config);
-	});
-
-});	
-
-		
+	"total":25
+}

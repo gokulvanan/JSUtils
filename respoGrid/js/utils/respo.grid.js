@@ -27,6 +27,7 @@ define(function () {
     var hideableCols = new Array(), hiddenCols = new Array();
     var colSpanSize=0; // used to add NO Data Found, Loading messages
     var scrollBarPadding=13; // added to provide padding to last header column for scrollbar
+    var columnPadding=17; // individual header column padding value is defined currently by bootstrap css
     var actionHandlerMap={};// map used to map action names to handler functions for the action specfied 
 
     function getInstance (options) {
@@ -60,7 +61,7 @@ define(function () {
         $div.append($head);
         
         var ht = $window.innerHeight()*opts.height;
-        var $bodyDiv = $('<div id="respoGridBody_'+divId+'" style="top:0px;overflow-y:scroll;overflow-x:hidden;height:'+ht+'px;border-bottom:1px solid #eee;"></div>');
+        var $bodyDiv = $('<div id="respoGridBody_'+divId+'" style="top:0px;overflow-y:scroll;height:'+ht+'px;border-bottom:1px solid #dddddd;"></div>');
 
         // Build Search div if given
         
@@ -143,15 +144,28 @@ define(function () {
         if(opts.source === 'local'){
             opts.data = getLocalData(opts);
             handler(opts);
-        }else{ // source === ajax
+        }else if (opts.source ==='ajax'){ // source === ajax
              opts.params[opts.paramNames["page"]]=opts.page;
              opts.params[opts.paramNames["rowsPerPage"]]=opts.rowsPerPage;
              opts.params[opts.paramNames["sortCol"]]=opts.sortCol;
              opts.params[opts.paramNames["sortDir"]]=opts.sortDir;
-             // console.log("SORT");
-             // console.log(opts.sortDir);
-             // console.log(opts.params[opts.paramNames["sortDir"]]);
              ajaxCallHelper(opts,handler)
+        }else if (opts.source === 'loadOnSearch'){
+            if(opts.searchCall){ // make ajax call for search
+                opts.page=1; // reset to first page
+                opts.params[opts.paramNames["page"]]=undefined; // remove pagination params as pagination is now clientSide
+                opts.params[opts.paramNames["rowsPerPage"]]=undefined; // remove pagination params as pagination is now clientSide
+                opts.params[opts.paramNames["sortCol"]]=opts.sortCol;
+                opts.params[opts.paramNames["sortDir"]]=opts.sortDir;
+                ajaxCallHelper(opts,handler)
+
+            }else{ // work with local data for other cases
+              if(opts.localData && opts.localData.length > 0){
+                    opts.data = getLocalData(opts);
+                    handler(opts);
+                }  
+            }
+            
         }
     }
     
@@ -162,11 +176,40 @@ define(function () {
                 // console.log(obj);
                 opts.data =  obj[opts.paramNames.data];
                 opts.total = obj[opts.paramNames.total];
+                afterAjaxCall(opts); // helper method to remove loading div, cleaup.. no data msg + error reporting
                 handler(opts);
-//              afterAjaxCall(opts); // helper method to remove loading div, cleaup.. no data msg + error reporting
+                afterBuildingGrid(opts);
             });
     }
    
+    function beforeAjaxCall(opts){
+        
+        opts.data=[]; // clear old Data
+        
+        // code to work with yui set of pagination options set in my BE.. to remove this from here
+        var paramNames = opts.paramNames;
+        var page = opts.params[paramNames.page];
+        var rowsPerPage = opts.params[paramNames.rowsPerPage];
+        var dir = opts.params[paramNames.sortDir];
+        dir = (dir === "asc" )? true : false;
+        page = (page-1)*rowsPerPage;
+        
+        opts.params[paramNames.sortDir]=dir;
+        opts.params[paramNames.page]= page;
+    }
+    
+    function afterAjaxCall(opts){
+        if(opts.source="loadOnSearch"){
+            opts.searchFlag=false;// search flag reset.. to keep pagination and sorting as local calls its set during every serach call
+            opts.localdata=[]; // as localData needs to be populate
+            opts.localdata=opts.data;
+            opts.data=getLocalData(opts);
+        }
+    }
+
+    function afterBuildingGrid(opts){
+        //TODO
+    }
     function buildTableFromData(opts,divId,$bodyDiv,$div,$head){
         var table = new Array();
         table.push('<table id="body_'+divId+'" class="table table table-bordered table-striped " style="table-layout:fixed;">');
@@ -198,15 +241,19 @@ define(function () {
     
     function search(opts,divId){
         //search from ajax data 
-        if(opts.source==='ajax'){
+        if(opts.source==='ajax' || opts.source === 'loadOnSearch'){
+            opts.searchFlag=(opts.source === 'loadOnSearch');
             var params = getSerchParams("search"); // add search params 
             opts.params=params;
             processData(opts,function(args){
                 reBuildBody(args,divId);
              });
+        }else if(opts.source === 'local'){
+            //TODO
+
         }
         else{
-//          TODO
+            throw "Invalid Source";
         }
 
     }
@@ -230,9 +277,9 @@ define(function () {
             // carry out custom action            
             actionHandlerMap[id]();
             //enable button
-//          setTimeout(function(){
+         setTimeout(function(){
                 enableButtons(id,".respo_btns");
-//          },3000)
+         },3000)
 
         });
     }
@@ -292,25 +339,7 @@ define(function () {
             return opts.localData.slice(i,j);
     }
     
-    function beforeAjaxCall(opts){
-        opts.data=[]; // clear old Data
-        var paramNames = opts.paramNames;
-        var page = opts.params[paramNames.page];
-        var rowsPerPage = opts.params[paramNames.rowsPerPage];
-        var dir = opts.params[paramNames.sortDir];
-        // console.log("before Ajax Call");
-        // console.log(opts.params);
-        dir = (dir === "asc" )? true : false;
-        page = (page-1)*rowsPerPage;
-        
-        opts.params[paramNames.sortDir]=dir;
-        opts.params[paramNames.page]= page;
-    }
-    
-    function afterAjaxCall(opts){
-        //TODO
-        
-    }
+   
     
 //    function getListHandler(response){
 //       opts.total=response[opts.paramNames["total"]];// TODO check need for retriving page and rowsPerpage 
@@ -378,8 +407,8 @@ define(function () {
     function disableButtons(id,label,grpClass){
         $(grpClass).attr("disabled",true);
         var loadingElm = $("button#"+id+"_loading");
-        if (loadingElm.length === 0){
-            loadingElm = $("<button id='"+id+"_loading' class='btn btn-warning btn-small' >  <img src='/public/images/loading.gif' ></img> "+label+" </button>");
+        if (loadingElm.length === 0){ //TODO change loading image to be in css sprite.. 
+            loadingElm = $("<button id='"+id+"_loading' class='btn btn-warning btn-small' >  <img src='/img/loading.gif' ></img> "+label+" </button>");
             loadingElm.insertAfter("button#"+id);
         }else{
             loadingElm.show();
@@ -473,7 +502,7 @@ define(function () {
         var str = new Array();
         // var ht = hiddenCols.length;
         str.push("<tr id='"+id+"_details' class='respo_details_row'>");
-        str.push("<td class='respo_details_backdrop' colspan='"+colSpanSize+"'>");
+        str.push("<td class='respo_details_backdrop' colspan='"+(colSpanSize - hiddenCols.length)+"'>");
         str.push(detailScreen(id));
         str.push("</td>");
         str.push("</tr>");
@@ -632,19 +661,17 @@ define(function () {
     }
 
     function buildHeader(table,opts){
-        // log(totalWidth)
         table.push("<thead>");
         table.push("<tr class='mainHeaderRow'>");
         for(var i=0; i<opts.colDefs.length; i++){
             var def = opts.colDefs[i];
             var wt =  def.minWidth;
-            var padding="";
+            var padding="", pad = 0;
             if(i == opts.colDefs.length-1){
-                // wt +=scrollBarPadding;
-                // def.scrollBarPadded=true;// flag to identify this colum is scorllBarPadded
+                pad = scrollBarPadding;
                 padding="padding-right:"+scrollBarPadding+"px";
             }
-            totalWidth += wt;
+            totalWidth += (wt + columnPadding + pad);  // 17px default header cellp adding by bootstrap
             if(def.hideable)hideableCols.push(def);
             table.push('<th class=" bluebackdrop '+def.name+'" style="word-wrap:break-word;width:'+wt+'px;'+padding+'" >');
             

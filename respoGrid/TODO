@@ -5,12 +5,16 @@ TODO
 - Sorting - DONE
 - Pagination - DONE
 - AJAX JSON load (pagination+sorting) -DONE
+
 - Action Button integration - DONE
-- Loding GIF - TO DO
-- Search integration - Done // TODO add local search case
-- LoadOnce/LoadOnSearch options
-- Alignment issue with columns due to width Map issue.. use differnt logic in resize for totalwidth
+- AJAX Search integration - Done 
+- Alignment issue with columns due to width Map issue.. use differnt logic in resize for totalwidth - done
+- AJAX Loding GIF - TO DO
+- Local Search - TODO
+- LoadOnce/LoadOnSearch options WIP
+- still have minor alignment lapse to investigate on this
 - sort button font changes 
+- utility code for checkboxes etc.. 
 - performance check
 - Code cleanup 
 -
