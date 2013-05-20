@@ -1,13 +1,23 @@
 
 require(['respo.grid'],function(gridObj) {
 
+	function validate(msg){
+		console.log(msg);
+		return false;
+	}
 	var config={  	
 			divId:"tableDiv",
 		  	colDefs:[
 		  	{ name:"id", 		label:"<input type='checkbox' id='selectAll' />", format:checkbox, align:"center", minWidth:50},
-		  	{ name:"firstname", label:"First Name", search:true, searchOpts:{placeHolder:"FirstName ..."}, minWidth:120, sort:true , main:true},
-		  	{ name:"lastname",  label:"Last Name",  minWidth:500, hideable:true, sort:true},
-		  	{ name:"job", 	    label:"Job Title", 	minWidth:300, hideable:true, sort:true },
+		  	{ name:"firstname", label:"First Name", search:true, 
+		  	searchOpts:{
+		  		searchType:"dropdown",  
+		  		opts:{select:"select", gokul:"gokul"} ,
+		  		placeHolder:"FirstName ..."
+		  		},
+		  		 minWidth:120, sort:true , main:true},
+		  	{ name:"lastname", search:true, searchOpts:{placeHolder:"LastName..."},  label:"Last Name",  minWidth:500, hideable:true, sort:true},
+		  	{ name:"job", 	    label:"Job Title", editable:true, editOpts:{type:"text", validation:validate},	minWidth:300, hideable:true, sort:true },
 		  	{ name:"dob", 		label:"DOB",		minWidth:100, hideable:true,  sort:true },
 		  	{ name:"status", 	label:"Status",		minWidth:100, sort:true }
 		  	],

@@ -29,6 +29,7 @@ define(function () {
     var scrollBarPadding=13; // added to provide padding to last header column for scrollbar
     var columnPadding=17; // individual header column padding value is defined currently by bootstrap css
     var actionHandlerMap={};// map used to map action names to handler functions for the action specfied 
+    var editableColsMap={}; // map used to map column names to editable actions and validaiton actions
 
     function getInstance (options) {
         options = options || {};
@@ -124,15 +125,27 @@ define(function () {
         var $div = $("div#"+opts.searchDiv);
         $div.attr("class","input-append");
         var search = new Array();
+        console.log(opts.colDefs);
         for(var i=0,len=opts.colDefs.length; i<len; i++){
+            console.log(opts.colDefs[i]);
             var def = opts.colDefs[i];
             if(def.search){
                 var searchOpts = def.searchOpts || {};
                 var type = searchOpts.searchType || "text";
+                var size = searchOpts.size || "large";
+                var placeHolder= searchOpts.placeHolder || "";
                 if(type === "text"){
-                    var size = searchOpts.size || "xlarge";
-                    var placeHolder = searchOpts.placeHolder || "";
                     search.push('<input class="search input-'+size+'"  placeholder="'+placeHolder+'" id="'+def.name+'" type="text" />')
+                }else if (type === 'dropdown'){
+                    var dropDownOpts =  searchOpts.opts || {};
+                    search.push("<select class='search input-"+size+"' id='"+def.name+"' >");
+                    if($.trim(placeHolder).length !== 0) {
+                          search.push("<option value='' > Select "+placeHolder+"</option>");
+                      }
+                    for(var key in dropDownOpts){
+                        search.push("<option value='"+key+"' >"+dropDownOpts[key]+"</option>");
+                    }
+                    search.push("</select>");
                 }
             }
         }
@@ -236,9 +249,33 @@ define(function () {
         $("a.respo_pagn",$caption).bind("click",function(event){ event.preventDefault();  pagnButtonClick(this,opts,$caption,divId);});
         // initCaptionHandlers($caption);
         // initSort($head);
+       initEditableCols($table);
         resize($table,opts);
     }
     
+    function initEditableCols($table){
+        console.log(" initEditableCols");
+        console.log(editableColsMap);
+        for(var key in editableColsMap){
+            console.log("input.respo_inline_edit_content_"+key);
+            $("input.respo_inline_edit_content_"+key,$table).click(function(event){
+                console.log("here");    
+                event.preventDefault();
+                var elm = $(this);
+                elm.removeAttr('readonly');
+                elm.next().show();
+                elm.next().next().show();
+            }); 
+            $("a.respo_inline_edit_cancel").click(function(event){
+                event.preventDefault();
+                var elm = $(this);
+                elm.hide();
+                elm.prev().hide();
+                elm.prev().prev().attr('readonly','readonly');
+            });
+        }
+    }
+
     function search(opts,divId){
         //search from ajax data 
         if(opts.source==='ajax' || opts.source === 'loadOnSearch'){
@@ -595,7 +632,10 @@ define(function () {
             for(var j=0; j<opts.colDefs.length; j++){
                 var def = opts.colDefs[j];
                 var content = (def.format)? def.format(row[def.name]) : row[def.name];
-                $td.find("span#respo_content_"+def.name).html(content);
+                var $span = $td.find("span.respo_content_"+def.name);
+                var $input = $span.find("input");
+                if($input.length === 0) $span.html(content);
+                else $input.val(content);
                 $td = $td.next();
             }
             $tr = $tr.next();
@@ -637,7 +677,7 @@ define(function () {
         for(var i=0; i<opts.data.length; i++){
             var row = opts.data[i];
             var id = i;
-            table.push("<tr id='"+id+"' class='mainRow'>");
+            table.push("<tr id='respo_row_"+id+"' class='mainRow'>");
             for(var j=0; j<opts.colDefs.length; j++){
                 var def = opts.colDefs[j];
                 var align = (def.align) ? def.align : "left";
@@ -646,11 +686,20 @@ define(function () {
                 // var hide ="";
                 table.push("<td class='"+def.name+"' style='word-wrap:break-word;width:"+width+"px;text-align:"+align+";"+hide+"'>");
                 if(def.main){
-                  table.push("<a href='#' class='respo_expand icon-plus-sign' style='display:none;' >&nbsp;</a>");
-                  table.push("<a href='#' class='respo_minimize icon-minus-sign' style='display:none;' >&nbsp;</a>&nbsp;")  
+                  table.push("<a href='#' class='respo_expand icon-expand-alt icon-large' style='display:none;' >&nbsp;</a>");
+                  table.push("<a href='#' class='respo_minimize icon-collapse-alt icon-large' style='display:none;' >&nbsp;</a>&nbsp;")  
                 } 
-                table.push("<span id='respo_content_"+def.name+"'>");
-                table.push((def.format)? def.format(row[def.name]) : row[def.name]);
+                table.push("<span id='respo_content_"+def.name+"_"+i+"' class='respo_content_"+def.name+"'>");
+                if(def.editable){
+                    editableColsMap[def.name]=def.editOpts;
+                    table.push("<input id='respo_inline_edit_content_"+def.name+"_"+i+"' type='text' readonly='readonly' class=' respo_inline_edit_content_"+def.name+"' value='");
+                    table.push((def.format)? def.format(row[def.name]) : row[def.name]);                
+                    table.push("'/>");
+                    table.push("&nbsp;<a href='#' class='respo_inline_edit_save icon-save' title='Save' style='display:none;'  >&nbsp;</a>");    
+                    table.push("&nbsp;<a href='#' class='respo_inline_edit_cancel icon-ban-circle' title='Cancel' style='display:none;'  >&nbsp;</a>");   
+                }else{
+                    table.push((def.format)? def.format(row[def.name]) : row[def.name]);
+                }
                 table.push("</span>");
                 table.push("</td>");
             }
