@@ -11,9 +11,10 @@ define(function () {
         "divId":null,
         "colDefs":[],
         "width":0.985,
-        "height":0.5,
+        "height":0.4,
         "localData":[],
-        "source":"local",// ajax / loadOnce / loadNext
+        "params":{},
+        "source":"local",// ajax / loadOnSearch
         "searchDiv": null,
         "paramNames":{"page":"page","rowsPerPage": "rowsPerPage","sortCol":"orderBy","sortDir":"asc","total":"total","data":"data"},
         //"paramNames":{"page":"page","rowsPerPage": "rowsPerPage","sortCol":"sortCol","sortDir":"sortDir","total":"total","data":"data"},
@@ -21,20 +22,29 @@ define(function () {
         "getListHandler":null // handler function handle json response
     }
     //Global variables
+    var COLOR_MAP={ // BOOTSTRAP COLOR Refrences
+            "green":"btn-success",
+            "red": "btn-danger",
+            "yellow":"btn-warning",
+            "black":"btn-inverse",
+            "blue" : "btn-primary",
+            "lightBlue":"btn-info"  
+    };
+    var SEARCH_CLASS="search";
     var debug=true; // added to switch on and off logging
     var widthMap={};// map that holds width of each cols as they change -- used in rebuilding body during pagination and sorting
     var totalWidth=0;
     var hideableCols = new Array(), hiddenCols = new Array();
-    var colSpanSize=0; // used to add NO Data Found, Loading messages
-    var scrollBarPadding=13; // added to provide padding to last header column for scrollbar
+    var colSpanSize=0; // used to add NO Data Found, Loading message
+    var scrollBarPadding=20; // added to provide padding to last header column for scrollbar
     var columnPadding=17; // individual header column padding value is defined currently by bootstrap css
     var actionHandlerMap={};// map used to map action names to handler functions for the action specfied 
     var editableColsMap={}; // map used to map column names to editable actions and validaiton actions
-
+    var loadingGIF="/public/images/loading.gif";
+    
     function getInstance (options) {
         options = options || {};
         var opts = $.extend(true, {}, defaults, options); //merge user and default options
-        
         var msg = _validate(opts);
         if(msg) throw msg;
         var $window = $(window);
@@ -89,33 +99,28 @@ define(function () {
         // // console.log("Show loading called");
         // opts.showLoadingDiv();
         // console.log(opts.paramNames);
+        
         // onload default sort
         if (opts.source === "local" ) {
             if(opts.sortCol){
                 var dir = (opts.sortDir === 'desc') ? 'desc' : 'asc'; 
             opts.localData.sort(function(a,b){ return sort(a,b,opts.sortCol,dir)});    
             }
-        }else{
-            //set Params for ajax call
-            // // console.log(opts.paramNames);
-            opts.params={};
-//            opts.params[opts.paramNames["page"]]=opts.page;
-//            opts.params[opts.paramNames["rowsPerPage"]]=opts.rowsPerPage;
-//            opts.params[opts.paramNames["sortCol"]]=opts.sortCol;
-//            opts.params[opts.paramNames["sortDir"]]=opts.sortDir;
         }
 
         opts.divId = divId;
         opts.$bodyDiv = $bodyDiv;
+        
+        console.log(opts.params);
         //set data based on rowsPerPage
         processData(opts,function(args){
+            console.log(args.data);
             buildTableFromData(args,divId,$bodyDiv,$div,$head);
         });
         
         return{
-            search: function(){
-//                params = (params) ? opts.params : params;
-                search(opts,divId);
+            search: function(params){
+                search(opts,divId,params);
                 return this;
             }
         }
@@ -125,9 +130,7 @@ define(function () {
         var $div = $("div#"+opts.searchDiv);
         $div.attr("class","input-append");
         var search = new Array();
-        console.log(opts.colDefs);
         for(var i=0,len=opts.colDefs.length; i<len; i++){
-            console.log(opts.colDefs[i]);
             var def = opts.colDefs[i];
             if(def.search){
                 var searchOpts = def.searchOpts || {};
@@ -135,7 +138,8 @@ define(function () {
                 var size = searchOpts.size || "large";
                 var placeHolder= searchOpts.placeHolder || "";
                 if(type === "text"){
-                    search.push('<input class="search input-'+size+'"  placeholder="'+placeHolder+'" id="'+def.name+'" type="text" />')
+                    var val = opts.params[def.name] || "";
+                    search.push('<input class="search input-'+size+'"  placeholder="'+placeHolder+'" id="'+def.name+'" type="text" value="'+val+'"/>')
                 }else if (type === 'dropdown'){
                     var dropDownOpts =  searchOpts.opts || {};
                     search.push("<select class='search input-"+size+"' id='"+def.name+"' >");
@@ -143,7 +147,8 @@ define(function () {
                           search.push("<option value='' > Select "+placeHolder+"</option>");
                       }
                     for(var key in dropDownOpts){
-                        search.push("<option value='"+key+"' >"+dropDownOpts[key]+"</option>");
+                        var selected= (opts.params[def.name] === key) ? "selected='selected'" : "";
+                        search.push("<option value='"+key+"' "+selected+" >"+dropDownOpts[key]+"</option>");
                     }
                     search.push("</select>");
                 }
@@ -191,14 +196,13 @@ define(function () {
                 opts.total = obj[opts.paramNames.total];
                 afterAjaxCall(opts); // helper method to remove loading div, cleaup.. no data msg + error reporting
                 handler(opts);
-                afterBuildingGrid(opts);
+//                afterBuildingGrid(opts);
             });
     }
    
     function beforeAjaxCall(opts){
         
         opts.data=[]; // clear old Data
-        
         // code to work with yui set of pagination options set in my BE.. to remove this from here
         var paramNames = opts.paramNames;
         var page = opts.params[paramNames.page];
@@ -212,7 +216,7 @@ define(function () {
     }
     
     function afterAjaxCall(opts){
-        if(opts.source="loadOnSearch"){
+        if(opts.source === "loadOnSearch"){
             opts.searchFlag=false;// search flag reset.. to keep pagination and sorting as local calls its set during every serach call
             opts.localdata=[]; // as localData needs to be populate
             opts.localdata=opts.data;
@@ -239,7 +243,7 @@ define(function () {
 
         if(opts.actions) initializeButtonActions($caption,opts.actions);
 
-        $("a.respo_expand",$table).bind("click",function(event){ event.preventDefault(); showDetails(this);});
+        $("a.respo_expand",$table).bind("click",function(event){ event.preventDefault(); showDetails(this,opts);});
         $("a.respo_minimize",$table).bind("click",function(event){ event.preventDefault();  hideDetails(this);});
         $("a.respo_sort_up",$head).bind("click",function(event){ event.preventDefault(); sortCol(this,opts,divId,"asc");});
         $("a.respo_sort_down",$head).bind("click",function(event){ event.preventDefault();  sortCol(this,opts,divId,"desc");});
@@ -249,41 +253,109 @@ define(function () {
         $("a.respo_pagn",$caption).bind("click",function(event){ event.preventDefault();  pagnButtonClick(this,opts,$caption,divId);});
         // initCaptionHandlers($caption);
         // initSort($head);
-       initEditableCols($table);
+        initEditableCols(opts);
         resize($table,opts);
     }
     
-    function initEditableCols($table){
-        console.log(" initEditableCols");
+    function initEditableCols(opts){
         console.log(editableColsMap);
-        for(var key in editableColsMap){
-            console.log("input.respo_inline_edit_content_"+key);
-            $("input.respo_inline_edit_content_"+key,$table).click(function(event){
-                console.log("here");    
+        // for(var key in editableColsMap){
+            // console.log("a.respo_inline_edit_"+key);
+        $("a.respo_inline_edit").click(function(event){
                 event.preventDefault();
-                var elm = $(this);
-                elm.removeAttr('readonly');
-                elm.next().show();
-                elm.next().next().show();
-            }); 
-            $("a.respo_inline_edit_cancel").click(function(event){
+                var edit   = $(this);
+                var input  = edit.prev();
+                var save   = edit.next();
+                var cancel = save.next();
+                var obj = getEditableRowCol(input);
+                var buff = editableColsMap[obj.col].buff || {};
+                buff[obj.row]=input.val(); // buffer the val
+                editableColsMap[obj.col].buff=buff;
+                console.log(editableColsMap);
+                showEditFieldDetails(input,save,cancel,edit);
+         }); 
+        
+        $("a.respo_inline_edit_cancel").click(function(event){
                 event.preventDefault();
-                var elm = $(this);
-                elm.hide();
-                elm.prev().hide();
-                elm.prev().prev().attr('readonly','readonly');
-            });
+                var cancel = $(this);
+                var save = cancel.prev();
+                var edit = save.prev();
+                var input = edit.prev();
+                var obj = getEditableRowCol(input);
+                var buff = editableColsMap[obj.col].buff;
+                if(!buff || !buff[obj.row]) throw "Error in initEditableCols";
+                input.val(buff[obj.row]);
+                hideEditFieldDetails(input,save,cancel,edit);
+        });
+        // TODO customize trigger click/change based on type of element text/dropdown
+        $("a.respo_inline_edit_save").click(function(event){
+                event.preventDefault();
+                var save = $(this);
+                var cancel = save.next();
+                var edit = save.prev();
+                var input = edit.prev();
+                var obj = getEditableRowCol(input);
+                var func = editableColsMap[obj.col];
+                var newVal = input.val();
+                // Disable al action buttons
+                // show loading
+                $("<img class='respo_inline_edit_loading' src='"+loadingGIF+"' ></img>").insertAfter(cancel);
+                func.action(newVal,opts.data[obj.row],function(json){
+                    if(func.handler(json)) opts.data[obj.row][obj.col]=newVal;
+                    else{
+                        var buff = editableColsMap[obj.col].buff;
+                        if(!buff || !buff[obj.row]) throw "Error in initEditableCols";
+                        input.val(buff[obj.row]);
+                    }
+                    $("img.respo_inline_edit_loading").remove();
+                });
+                //enable all actions buttons
+                hideEditFieldDetails(input,save,cancel,edit);
+        });
+
+    }
+
+    function showEditFieldDetails(input,save,cancel,edit){
+        input.removeAttr("readonly");
+        edit.hide();
+        save.show();
+        cancel.show();
+    }
+
+    function hideEditFieldDetails(input,save,cancel,edit){
+        input.attr("readonly","readonly");
+        edit.show();
+        save.hide();
+        cancel.hide();
+    }
+
+    function getEditableRowCol(elm,opts){
+        var vals = elm.attr("id").split("~");
+        var row = vals.pop();
+        var col = vals.pop();
+        console.log(row+"_"+col);
+           
+        return{
+            "row":row,
+            "col":col,
         }
     }
 
-    function search(opts,divId){
+    function search(opts,divId,params){
         //search from ajax data 
         if(opts.source==='ajax' || opts.source === 'loadOnSearch'){
             opts.searchFlag=(opts.source === 'loadOnSearch');
-            var params = getSerchParams("search"); // add search params 
+            params = (params) ? params : getSerchParams(SEARCH_CLASS); // add search params 
             opts.params=params;
             processData(opts,function(args){
-                reBuildBody(args,divId);
+                reBuildBody(args,divId); // rebuild body
+                
+                // rebuild and reinitialize pagn buttons
+                $("ul#respo_pagn_links").html(buildPagnButtons(args.page,args.getTotalPages()));
+                // re init tigger to pagnButton click handlers
+                var $caption = $("div#resp_caption");
+                $("select.respo_curr_page",$caption).bind("change",function(event){ pagnButtonClick(this,args,$caption,divId);});
+                $("a.respo_pagn",$caption).bind("click",function(event){ event.preventDefault();  pagnButtonClick(this,args,$caption,divId);});
              });
         }else if(opts.source === 'local'){
             //TODO
@@ -299,8 +371,9 @@ define(function () {
         var params={};
         $("."+clazz).each(function(){
             var id = $(this).attr("id");
-            var val = $(this).val();
-            params[id]=val;
+            var val = $.trim($(this).val());
+            if(val.length !== 0)
+                params[id]=$.trim(val);
         });
         return params;
     }
@@ -311,12 +384,11 @@ define(function () {
             var loading = $(this).attr("data-loading-text");
             // disable button
             disableButtons(id,loading,".respo_btns");
-            // carry out custom action            
-            actionHandlerMap[id]();
+            // carry out custom action
+            var action = actionHandlerMap[id] || function(){};
+            action();
             //enable button
-         setTimeout(function(){
-                enableButtons(id,".respo_btns");
-         },3000)
+            enableButtons(id,".respo_btns");
 
         });
     }
@@ -385,7 +457,7 @@ define(function () {
 //    
     function buildCaption(opts){
         var caption = new Array();
-        caption.push('<div  id="resp.caption row" >')
+        caption.push('<div  id="resp_caption" >')
         if(opts.actions)     caption.push(buildActions(opts,caption)); // TODO: change this dirty trick to keep div on same row and improve css 
         if(opts.pageOpts)    caption.push(buildPagination(opts,caption));
         caption.push('</div>');
@@ -424,12 +496,25 @@ define(function () {
         var acts = opts.actions;
         var actions = new Array();
         actions.push('<div id="respo_actions" class="pull-right" style="margin-right:10px;">');
+        
         for(var i=0,len=acts.length; i<len; i++){
-            actionHandlerMap[acts[i].name]= acts[i].action; // used in click Handler to prevent array looping to lookup the action for button clicked
-            actions.push('<button id="'+acts[i].name+'" class="respo_btns btn btn-danger btn-small" data-loading-text="'+acts[i].loading+'">');
-            actions.push("<i class='icon "+acts[i].icon+"'> </i>&nbsp;")
-            actions.push(acts[i].label);
-            actions.push('</button>');
+            var color = acts[i].color || "red";
+            color = COLOR_MAP[color] ;
+            console.log(color);
+            if(acts[i].modal){
+                
+                actions.push('<a href="#'+acts[i].modal+'" role="button" class="respo_btns btn '+color+' btn-small" data-toggle="modal" data-loading-text="'+acts[i].loading+'">')
+                actions.push("<i class='icon "+acts[i].icon+"'> </i>&nbsp;")
+                actions.push(acts[i].label);
+                actions.push('</a>');
+            }else{
+                actionHandlerMap[acts[i].name]= acts[i].action; // used in click Handler to prevent array looping to lookup the action for button clicked
+                actions.push('<button id="'+acts[i].name+'" class="respo_btns btn '+color+' btn-small" data-loading-text="'+acts[i].loading+'">');
+                actions.push("<i class='icon "+acts[i].icon+"'> </i>&nbsp;")
+                actions.push(acts[i].label);
+                actions.push('</button>');
+            }
+    
         }
         actions.push('  </div> ');
         return actions.join(" ");
@@ -445,7 +530,7 @@ define(function () {
         $(grpClass).attr("disabled",true);
         var loadingElm = $("button#"+id+"_loading");
         if (loadingElm.length === 0){ //TODO change loading image to be in css sprite.. 
-            loadingElm = $("<button id='"+id+"_loading' class='btn btn-warning btn-small' >  <img src='/img/loading.gif' ></img> "+label+" </button>");
+            loadingElm = $("<button id='"+id+"_loading' class='btn btn-warning btn-small' >  <img src='"+loadingGIF+"' ></img> "+label+" </button>");
             loadingElm.insertAfter("button#"+id);
         }else{
             loadingElm.show();
@@ -515,13 +600,14 @@ define(function () {
       else                        $("a.respo_expand").show();
     }
 
-    function showDetails(elm){
+    function showDetails(elm,opts){
         var $elm = $(elm);
         $elm.hide();
         $elm.next().show(); 
         var tr = $elm.parent().parent();
         var desc = buildDesc($(tr).attr("id"));
         desc.insertAfter($(tr));
+        initEditableCols(opts);
         // log(elm);
     }
 
@@ -555,7 +641,7 @@ define(function () {
             str.push("<li>");
             str.push("<b>");
             str.push(def.label);
-            str.push("</b> :");
+            str.push("</b> :&nbsp;&nbsp;");
             str.push(getRowVal(id,def.name));      
             str.push("</li>"); 
         }
@@ -631,7 +717,7 @@ define(function () {
             // log($td);
             for(var j=0; j<opts.colDefs.length; j++){
                 var def = opts.colDefs[j];
-                var content = (def.format)? def.format(row[def.name]) : row[def.name];
+                var content = (def.format)? def.format(row[def.name],row) : row[def.name];
                 var $span = $td.find("span.respo_content_"+def.name);
                 var $input = $span.find("input");
                 if($input.length === 0) $span.html(content);
@@ -651,7 +737,7 @@ define(function () {
         buildBody(table,opts,true);
         $table.html(table.join(""));
 
-        $("a.respo_expand",$table).bind("click",function(event){ event.preventDefault(); showDetails(this);});
+        $("a.respo_expand",$table).bind("click",function(event){ event.preventDefault(); showDetails(this,opts);});
         $("a.respo_minimize",$table).bind("click",function(event){ event.preventDefault();  hideDetails(this);});
         resize($table,opts);
     }
@@ -691,14 +777,17 @@ define(function () {
                 } 
                 table.push("<span id='respo_content_"+def.name+"_"+i+"' class='respo_content_"+def.name+"'>");
                 if(def.editable){
-                    editableColsMap[def.name]=def.editOpts;
-                    table.push("<input id='respo_inline_edit_content_"+def.name+"_"+i+"' type='text' readonly='readonly' class=' respo_inline_edit_content_"+def.name+"' value='");
-                    table.push((def.format)? def.format(row[def.name]) : row[def.name]);                
+                    var editOpts=def.editOpts;
+                    var size = editOpts.size || "small";
+                    editableColsMap[def.name]=editOpts;
+                    table.push("<input id='respo_inline_edit_content~"+def.name+"~"+i+"' type='text' readonly='readonly' class='input-"+size+" respo_inline_edit_content_"+def.name+"' value='");
+                    table.push((def.format)? def.format(row[def.name],row) : row[def.name]);                
                     table.push("'/>");
+                    table.push("&nbsp;<a href='#' class='respo_inline_edit icon-edit ' title='Edit'   >&nbsp;</a>");    
                     table.push("&nbsp;<a href='#' class='respo_inline_edit_save icon-save' title='Save' style='display:none;'  >&nbsp;</a>");    
                     table.push("&nbsp;<a href='#' class='respo_inline_edit_cancel icon-ban-circle' title='Cancel' style='display:none;'  >&nbsp;</a>");   
                 }else{
-                    table.push((def.format)? def.format(row[def.name]) : row[def.name]);
+                    table.push((def.format)? def.format(row[def.name],row) : row[def.name]);
                 }
                 table.push("</span>");
                 table.push("</td>");
@@ -748,6 +837,16 @@ define(function () {
 
     function _validate(opts){
 
+        if(opts.params){
+            var p = {};
+            for(var param in opts.params){
+                var val = opts.params[param];
+                if($.trim(val).length !== 0) // remove empty val
+                    p[param] = val;  
+            }
+            opts.params =p;
+        }
+        
         if(opts.source === 'local'){
             if(!opts.page) opts.page=1;
             if(!opts.rowsPerPage) opts.rowsPerPage=opts.localData.length;
@@ -756,6 +855,7 @@ define(function () {
             if(!opts.getList || !opts.getListHandler){
                 return "For source == 'ajax' , getList and getListHandler has to specified";
             }
+            
         }else{
             return "Invalid source type";
         }

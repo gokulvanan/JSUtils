@@ -1,10 +1,17 @@
 
 require(['respo.grid'],function(gridObj) {
 
-	function validate(msg){
-		console.log(msg);
-		return false;
+	function editLastName(val,row,handler){
+		console.log(row);
+		console.log(val);
+		handler("handler args");
 	}
+
+	function editHandler(json){
+		console.log(json);
+		return true;
+	}
+
 	var config={  	
 			divId:"tableDiv",
 		  	colDefs:[
@@ -17,7 +24,7 @@ require(['respo.grid'],function(gridObj) {
 		  		},
 		  		 minWidth:120, sort:true , main:true},
 		  	{ name:"lastname", search:true, searchOpts:{placeHolder:"LastName..."},  label:"Last Name",  minWidth:500, hideable:true, sort:true},
-		  	{ name:"job", 	    label:"Job Title", editable:true, editOpts:{type:"text", validation:validate},	minWidth:300, hideable:true, sort:true },
+		  	{ name:"job", 	    label:"Job Title", editable:true, editOpts:{type:"text", action:editLastName, handler:editHandler},	minWidth:300, hideable:true, sort:true },
 		  	{ name:"dob", 		label:"DOB",		minWidth:100, hideable:true,  sort:true },
 		  	{ name:"status", 	label:"Status",		minWidth:100, sort:true }
 		  	],
