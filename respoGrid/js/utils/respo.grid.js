@@ -77,28 +77,7 @@ define(function () {
         // Build Search div if given
         
         if(opts.searchDiv) buildSearchDiv(opts);
-        //TODO Correct the bug in loading function
-        // loading div to show timer 
-     /*   var loadingDiv=$("<div id='respo_loading_"+opts.divId+"' class='icon icon-large incon-spinner icon-spin' style='display:none;'></div>");
-        $div.append(loadingDiv);
-        opts.showLoadingDiv = function(){
-            var parentDiv = $("div#"+divId);
-            $(loadingDiv).css({
-            // "position":"relative",
-            "top": "0px",
-            "left": "0px",
-            "width": "100%",
-            "height": "100%",
-            "z-index": 500,
-             });
-            $(loadingDiv).show();
-        }
-        opts.hideLoadingDiv = function(){
-            $(loadingDiv).hide();
-        }*/
-        // // console.log("Show loading called");
-        // opts.showLoadingDiv();
-        // console.log(opts.paramNames);
+     
         
         // onload default sort
         if (opts.source === "local" ) {
@@ -159,6 +138,7 @@ define(function () {
     }
 
     function processData(opts, handler){
+        beforeBuildingGrid(opts);
         if(opts.source === 'local'){
             opts.data = getLocalData(opts);
             handler(opts);
@@ -196,7 +176,7 @@ define(function () {
                 opts.total = obj[opts.paramNames.total];
                 afterAjaxCall(opts); // helper method to remove loading div, cleaup.. no data msg + error reporting
                 handler(opts);
-//                afterBuildingGrid(opts);
+               afterBuildingGrid(opts);
             });
     }
    
@@ -225,8 +205,32 @@ define(function () {
     }
 
     function afterBuildingGrid(opts){
-        //TODO
+        //hide Loading Div
+        console.log("HERE IN AFTER BUILDING GRID");
     }
+
+    function beforeBuildingGrid(opts){
+        //show loading div
+        console.log("HERE IN BEFORE BUILDING GRID");
+        /*var parent = $("div#respoGridBody_tableDiv");
+        
+        console.log(parent);
+        console.log(parent.css("top"));
+        console.log(parent.css("left"));
+         var loadingDiv=$("<div id='respo_loading_"+opts.divId+"' style='z-index:1024;'  ></div>");
+         loadingDiv.insertAfter(parent);
+         loadingDiv.css({
+            "top":"0px",
+            "left":"0px",
+            "width":parent.css("width"),
+            "height":parent.css("height"),
+
+            "opacity":"0.8",
+            "background-color":"#000000"
+
+         });*/
+    }
+
     function buildTableFromData(opts,divId,$bodyDiv,$div,$head){
         var table = new Array();
         table.push('<table id="body_'+divId+'" class="table table table-bordered table-striped " style="table-layout:fixed;">');
