@@ -16,6 +16,7 @@ define(function () {
         "params":{},
         "source":"local",// ajax / loadOnSearch
         "searchDiv": null,
+        "searchOnEnter":true,
         "paramNames":{"page":"page","rowsPerPage": "rowsPerPage","sortCol":"orderBy","sortDir":"asc","total":"total","data":"data"},
         //"paramNames":{"page":"page","rowsPerPage": "rowsPerPage","sortCol":"sortCol","sortDir":"sortDir","total":"total","data":"data"},
         "getList":null, // function called during AJAX load input args contains params of gird , output json with total and data fields
@@ -72,12 +73,15 @@ define(function () {
         $div.append($head);
         
         var ht = $window.innerHeight()*opts.height;
+        var $loadingDiv = $(buildLoadingDiv(divId,ht));
+        $div.append($loadingDiv);
+        opts.$loading=$loadingDiv;
         var $bodyDiv = $('<div id="respoGridBody_'+divId+'" style="top:0px;overflow-y:scroll;height:'+ht+'px;border-bottom:1px solid #dddddd;"></div>');
 
         // Build Search div if given
         
         if(opts.searchDiv) buildSearchDiv(opts);
-     
+        
         
         // onload default sort
         if (opts.source === "local" ) {
@@ -99,12 +103,23 @@ define(function () {
         
         return{
             search: function(params){
-                search(opts,divId,params);
+                search(opts,params);
                 return this;
             }
         }
     };
     
+    function buildLoadingDiv(divId,ht){
+        var loading = new Array();
+        loading.push('<div id="respoGridLoading_'+divId+'" style="top:0px;overflow-y:scroll;height:'+ht+'px;border:1px solid #dddddd;">');
+        loading.push('<table cellspacing="0" cellpadding="0" width="100%" height="100%">');
+        loading.push('<tr>');
+        loading.push('<td style="vertical-align:middle;text-align:center;"><i class="icon-spinner icon-4x icon-spin" ></i></td>');
+        loading.push('</tr></table></div>');
+        loading.push(' </div>');
+        return loading.join(" ");
+    }
+
     function buildSearchDiv(opts){
         var $div = $("div#"+opts.searchDiv);
         $div.attr("class","input-append");
@@ -133,8 +148,22 @@ define(function () {
                 }
             }
         }
-        search.push('<button id="go" class="btn " type="button">Go!</button>');
+        search.push('<button id="go" class="btn respo_search " type="button">Go!</button>');
         $div.html(search.join(" "));
+        initSearchHandlers(opts);
+    }
+
+    function initSearchHandlers(opts){
+        $("button#respo_search").click(function(e){
+            search(opts);
+        });
+        if(opts.searchOnEnter){
+            $(document).keypress(function(e) {
+                if(e.which == 13) { // 13 = enter key code
+                  search(opts);
+                }
+            });
+        }
     }
 
     function processData(opts, handler){
@@ -142,6 +171,7 @@ define(function () {
         if(opts.source === 'local'){
             opts.data = getLocalData(opts);
             handler(opts);
+            afterBuildingGrid(opts);
         }else if (opts.source ==='ajax'){ // source === ajax
              opts.params[opts.paramNames["page"]]=opts.page;
              opts.params[opts.paramNames["rowsPerPage"]]=opts.rowsPerPage;
@@ -161,6 +191,7 @@ define(function () {
               if(opts.localData && opts.localData.length > 0){
                     opts.data = getLocalData(opts);
                     handler(opts);
+                    afterBuildingGrid(opts);
                 }  
             }
             
@@ -181,7 +212,7 @@ define(function () {
     }
    
     function beforeAjaxCall(opts){
-        
+        opts.wait=true; // flag prevent click actions on other buttons when loading is in progress
         opts.data=[]; // clear old Data
         // code to work with yui set of pagination options set in my BE.. to remove this from here
         var paramNames = opts.paramNames;
@@ -202,15 +233,21 @@ define(function () {
             opts.localdata=opts.data;
             opts.data=getLocalData(opts);
         }
+        opts.wait=false;// flag reset to enable click actions on other buttons after loading is done
     }
 
     function afterBuildingGrid(opts){
         //hide Loading Div
+        opts.$loading.hide();
+        $("div#respoGridBody_"+opts.divId).show();
         console.log("HERE IN AFTER BUILDING GRID");
     }
 
     function beforeBuildingGrid(opts){
         //show loading div
+        
+        opts.$loading.show();
+        $("div#respoGridBody_"+opts.divId).hide();
         console.log("HERE IN BEFORE BUILDING GRID");
         /*var parent = $("div#respoGridBody_tableDiv");
         
@@ -345,9 +382,21 @@ define(function () {
         }
     }
 
-    function search(opts,divId,params){
+    /*
+    * Prevent user for making mulitple calls when on req is loading.. defensive code to guard
+    * against user making repeatitive clicks
+    */
+    function loadingWait(opts){
+        if(opts.wait) 
+            throw "Please wait till the earlier request if processed";
+    }
+
+    function search(opts,params){
+        console.log("Search Call");
+        var divId = opts.divId;
         //search from ajax data 
         if(opts.source==='ajax' || opts.source === 'loadOnSearch'){
+            loadingWait(opts); // avoid processing new search req when previous is loading
             opts.searchFlag=(opts.source === 'loadOnSearch');
             params = (params) ? params : getSerchParams(SEARCH_CLASS); // add search params 
             opts.params=params;
@@ -384,6 +433,7 @@ define(function () {
     
     function initializeButtonActions($caption, opts){
         $(".respo_btns",$caption).bind("click",function(){
+            loadingWait(opts); // avoid processing new action req when previous is loading
             var id = $(this).attr("id");
             var loading = $(this).attr("data-loading-text");
             // disable button
@@ -396,9 +446,10 @@ define(function () {
 
         });
     }
-    // TODO from pagnButtonClick
+ 
     function pagnButtonClick(elm,opts,$caption,divId){
         // // console.log($(elm).is("select"));
+        loadingWait(opts); // avoid processing new pagn req when previous is loading
         var $elm = $(elm);
         var elmType = $elm[0].nodeName.toLowerCase();
         if(elmType === "select"){
@@ -544,7 +595,6 @@ define(function () {
     }
     
     function buildPagnButtons(page,totalPages){
-        
         var pagn = new Array();
         if(page === 1)       pagn.push('<li class="disabled">');
         else                 pagn.push('<li >');
@@ -563,6 +613,7 @@ define(function () {
 
     function changeRowsPerPage(elm,opts,$caption,divId){
         // update table data and update pagn params
+        loadingWait(opts); // avoid processing new rowsPerPage req when previous is loading
         var val = parseInt($(elm).html());
         $("span#respo_rows_per_page_val").html(val);
         opts.rowsPerPage=val;
@@ -580,7 +631,7 @@ define(function () {
     
   
     function sortCol(elm,opts,divId,dir){
-      
+      loadingWait(opts); // avoid processing new sort req when previous is loading
       var tableBody = $("table#body_"+divId);
       var col = $(elm).attr("id");
       col = col.substring(0,col.length-3);  

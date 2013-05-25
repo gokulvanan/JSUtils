@@ -9,12 +9,16 @@ TODO
 - Action Button integration - DONE
 - AJAX Search integration - Done 
 - Alignment issue with columns due to width Map issue.. use differnt logic in resize for totalwidth - done
-- AJAX Loding GIF - TO DO
-- Local Search - TODO
-- LoadOnce/LoadOnSearch options WIP
+- AJAX Loding GIF - DONE
+
+- LoadOnce/LoadOnSearch options TO be tested -- need to write doucmentation
+- Local Search - WIP
+- Need to add more test cases
+
+
 - still have minor alignment lapse to investigate on this
 - sort button font changes 
-- utility code for checkboxes etc.. 
+- utility code for checkboxes etc.. - done to be intergated
 - performance check
 - Code cleanup 
 -
