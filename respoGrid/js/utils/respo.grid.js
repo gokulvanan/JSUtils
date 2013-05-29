@@ -1,5 +1,3 @@
-    
-
 /* 
     Requries jquery1.7 or above
 */
@@ -17,6 +15,7 @@ define(function () {
         "source":"local",// ajax / loadOnSearch
         "searchDiv": null,
         "searchOnEnter":true,
+        "afterGridLoad":null,
         "paramNames":{"page":"page","rowsPerPage": "rowsPerPage","sortCol":"orderBy","sortDir":"asc","total":"total","data":"data"},
         //"paramNames":{"page":"page","rowsPerPage": "rowsPerPage","sortCol":"sortCol","sortDir":"sortDir","total":"total","data":"data"},
         "getList":null, // function called during AJAX load input args contains params of gird , output json with total and data fields
@@ -41,6 +40,7 @@ define(function () {
     var columnPadding=17; // individual header column padding value is defined currently by bootstrap css
     var actionHandlerMap={};// map used to map action names to handler functions for the action specfied 
     var editableColsMap={}; // map used to map column names to editable actions and validaiton actions
+    var autoCompleteElms = {}; // map used to map columnName used in search field to autoComplete Hidden val field  
     var loadingGIF="/public/images/loading.gif";
     
     function getInstance (options) {
@@ -124,7 +124,7 @@ define(function () {
         var $div = $("div#"+opts.searchDiv);
         $div.attr("class","input-append");
         var search = new Array();
-        for(var i=0,len=opts.colDefs.length; i<len; i++){
+        for(var i=0,len=opts.colDefs.length; i<len; i++){ 
             var def = opts.colDefs[i];
             if(def.search){
                 var searchOpts = def.searchOpts || {};
@@ -133,6 +133,15 @@ define(function () {
                 var placeHolder= searchOpts.placeHolder || "";
                 if(type === "text"){
                     var val = opts.params[def.name] || "";
+                    if(searchOpts.autocomplete){
+                        var autocompleteOpts = searchOpts.autocompleteOpts || {};
+                        autoCompleteElms[def.name]=autocompleteOpts; 
+                        if(autocompleteOpts.keyval){ // create hidden element to store key
+                            autoCompleteElms[def.name]=autocompleteOpts;
+                            var hidVal = opts.params[autocompleteOpts.keyval] || "";
+                            search.push('<input class=" " id="'+autocompleteOpts.keyval+'" type="hidden" value="'+hidVal+'"/>');
+                        }
+                    }
                     search.push('<input class="search input-'+size+'"  placeholder="'+placeHolder+'" id="'+def.name+'" type="text" value="'+val+'"/>')
                 }else if (type === 'dropdown'){
                     var dropDownOpts =  searchOpts.opts || {};
@@ -150,6 +159,13 @@ define(function () {
         }
         search.push('<button id="go" class="btn respo_search " type="button">Go!</button>');
         $div.html(search.join(" "));
+        console.log(autoCompleteElms);
+        for(var elName in autoCompleteElms){ // initialize autocomplete opts if any
+            var autoOpts=autoCompleteElms[elName];
+            $("input#"+elName).typeahead({
+                "source":autoOpts.source
+            });
+        }
         initSearchHandlers(opts);
     }
 
@@ -240,6 +256,7 @@ define(function () {
         //hide Loading Div
         opts.$loading.hide();
         $("div#respoGridBody_"+opts.divId).show();
+        if(opts.afterGridLoad)  opts.afterGridLoad(); // after gridLoad function can be called via client
         console.log("HERE IN AFTER BUILDING GRID");
     }
 
@@ -249,24 +266,7 @@ define(function () {
         opts.$loading.show();
         $("div#respoGridBody_"+opts.divId).hide();
         console.log("HERE IN BEFORE BUILDING GRID");
-        /*var parent = $("div#respoGridBody_tableDiv");
-        
-        console.log(parent);
-        console.log(parent.css("top"));
-        console.log(parent.css("left"));
-         var loadingDiv=$("<div id='respo_loading_"+opts.divId+"' style='z-index:1024;'  ></div>");
-         loadingDiv.insertAfter(parent);
-         loadingDiv.css({
-            "top":"0px",
-            "left":"0px",
-            "width":parent.css("width"),
-            "height":parent.css("height"),
-
-            "opacity":"0.8",
-            "background-color":"#000000"
-
-         });*/
-    }
+   }
 
     function buildTableFromData(opts,divId,$bodyDiv,$div,$head){
         var table = new Array();
@@ -305,15 +305,18 @@ define(function () {
         $("a.respo_inline_edit").click(function(event){
                 event.preventDefault();
                 var edit   = $(this);
-                var input  = edit.prev();
+                var input  = edit.parent().prev();
                 var save   = edit.next();
                 var cancel = save.next();
                 var obj = getEditableRowCol(input);
-                var buff = editableColsMap[obj.col].buff || {};
+                var func = editableColsMap[obj.col];
+                console.log(func);
+                var buff = func.buff || {};
                 buff[obj.row]=input.val(); // buffer the val
                 editableColsMap[obj.col].buff=buff;
                 console.log(editableColsMap);
                 showEditFieldDetails(input,save,cancel,edit);
+                if(func.onStart) func.onStart(input);
          }); 
         
         $("a.respo_inline_edit_cancel").click(function(event){
@@ -321,12 +324,15 @@ define(function () {
                 var cancel = $(this);
                 var save = cancel.prev();
                 var edit = save.prev();
-                var input = edit.prev();
+                var input = edit.parent().prev();
                 var obj = getEditableRowCol(input);
-                var buff = editableColsMap[obj.col].buff;
+                var func = editableColsMap[obj.col];
+                console.log(func);
+                var buff = func.buff || {};
                 if(!buff || !buff[obj.row]) throw "Error in initEditableCols";
                 input.val(buff[obj.row]);
                 hideEditFieldDetails(input,save,cancel,edit);
+                if(func.onFinish) func.onFinish(input);
         });
         // TODO customize trigger click/change based on type of element text/dropdown
         $("a.respo_inline_edit_save").click(function(event){
@@ -334,7 +340,7 @@ define(function () {
                 var save = $(this);
                 var cancel = save.next();
                 var edit = save.prev();
-                var input = edit.prev();
+                var input = edit.parent().prev();
                 var obj = getEditableRowCol(input);
                 var func = editableColsMap[obj.col];
                 var newVal = input.val();
@@ -352,6 +358,7 @@ define(function () {
                 });
                 //enable all actions buttons
                 hideEditFieldDetails(input,save,cancel,edit);
+                if(func.onFinish) func.onFinish(input);
         });
 
     }
@@ -382,18 +389,8 @@ define(function () {
         }
     }
 
-    /*
-    * Prevent user for making mulitple calls when on req is loading.. defensive code to guard
-    * against user making repeatitive clicks
-    */
-    function loadingWait(opts){
-        if(opts.wait) 
-            throw "Please wait till the earlier request if processed";
-    }
-
     function search(opts,params){
-        console.log("Search Call");
-        var divId = opts.divId;
+        var divId=opts.divId;
         //search from ajax data 
         if(opts.source==='ajax' || opts.source === 'loadOnSearch'){
             loadingWait(opts); // avoid processing new search req when previous is loading
@@ -417,8 +414,8 @@ define(function () {
         else{
             throw "Invalid Source";
         }
-
     }
+    
 
     function getSerchParams(clazz){
         var params={};
@@ -595,6 +592,7 @@ define(function () {
     }
     
     function buildPagnButtons(page,totalPages){
+        
         var pagn = new Array();
         if(page === 1)       pagn.push('<li class="disabled">');
         else                 pagn.push('<li >');
@@ -628,7 +626,10 @@ define(function () {
         });
     }
 
-    
+    function loadingWait(opts){
+        if(opts.wait) throw "Your Request is processing Please Wait";
+    }
+  
   
     function sortCol(elm,opts,divId,dir){
       loadingWait(opts); // avoid processing new sort req when previous is loading
@@ -835,12 +836,16 @@ define(function () {
                     var editOpts=def.editOpts;
                     var size = editOpts.size || "small";
                     editableColsMap[def.name]=editOpts;
+                    table.push('<div class="input-append ">');
                     table.push("<input id='respo_inline_edit_content~"+def.name+"~"+i+"' type='text' readonly='readonly' class='input-"+size+" respo_inline_edit_content_"+def.name+"' value='");
                     table.push((def.format)? def.format(row[def.name],row) : row[def.name]);                
                     table.push("'/>");
+                    table.push('<span class="add-on">');
                     table.push("&nbsp;<a href='#' class='respo_inline_edit icon-edit ' title='Edit'   >&nbsp;</a>");    
                     table.push("&nbsp;<a href='#' class='respo_inline_edit_save icon-save' title='Save' style='display:none;'  >&nbsp;</a>");    
-                    table.push("&nbsp;<a href='#' class='respo_inline_edit_cancel icon-ban-circle' title='Cancel' style='display:none;'  >&nbsp;</a>");   
+                    table.push("&nbsp;<a href='#' class='respo_inline_edit_cancel icon-ban-circle' title='Cancel' style='display:none;'  >&nbsp;</a>");
+                    table.push('</span>');
+                    table.push('</div>');
                 }else{
                     table.push((def.format)? def.format(row[def.name],row) : row[def.name]);
                 }
@@ -929,6 +934,7 @@ define(function () {
 
     return{
         getInstance: getInstance // initialize respoTable
+
     }
 
 
