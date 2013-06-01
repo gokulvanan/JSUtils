@@ -23,9 +23,9 @@ require(['respo.grid'],function(gridObj) {
 		  		placeHolder:"FirstName ..."
 		  		},
 		  		 minWidth:120, sort:true , main:true},
-		  	{ name:"lastname", search:true, searchOpts:{placeHolder:"LastName..."},  label:"Last Name",  minWidth:500, hideable:true, sort:true},
+		  	{ name:"lastname", search:true, searchOpts:{placeHolder:"LastName..."},  label:"Last Name",  minWidth:500, hideable:true,priority:1, sort:true},
 		  	{ name:"job", 	    label:"Job Title", editable:true, editOpts:{type:"text", action:editLastName, handler:editHandler},	minWidth:300, hideable:true, sort:true },
-		  	{ name:"dob", 		label:"DOB",		minWidth:100, hideable:true,  sort:true },
+		  	{ name:"dob", 		label:"DOB",		minWidth:100, hideable:true,priority:2,  sort:true },
 		  	{ name:"status", 	label:"Status",		minWidth:100, sort:true }
 		  	],
 		  	searchDiv:"searchDiv",
@@ -58,6 +58,7 @@ require(['respo.grid'],function(gridObj) {
 		  	pageOpts:[10,20,30],
 		  	page:1,
 		  	rowsPerPage:10,
+		  	debug:true, // enables logging
 		  	actions:[{name:"add", label:"Add", loading:"Adding...", icon:"icon-plus", action:function(){ console.log("Add action called");}},
 			{name:"delete", label:"Delete", loading:"Deleting...", icon:"icon-minus", action:function(){ console.log("Delete action called");}},
 		  	]

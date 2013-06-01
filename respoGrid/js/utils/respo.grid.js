@@ -1,5 +1,9 @@
+    
+
 /* 
-    Requries jquery1.7 or above
+    RespGrid is a Lightweight Responsive Grid builder, built as a modular component to work well with require.
+    Requries jquery1.7 or above, require.js and boostrap css 
+    @author gokulvannan@gmail.com
 */
 
 
@@ -16,19 +20,21 @@ define(function () {
         "searchDiv": null,
         "searchOnEnter":true,
         "afterGridLoad":null,
+        "priority": Number.MAX_VALUE,       
         "paramNames":{"page":"page","rowsPerPage": "rowsPerPage","sortCol":"orderBy","sortDir":"asc","total":"total","data":"data"},
-        //"paramNames":{"page":"page","rowsPerPage": "rowsPerPage","sortCol":"sortCol","sortDir":"sortDir","total":"total","data":"data"},
         "getList":null, // function called during AJAX load input args contains params of gird , output json with total and data fields
-        "getListHandler":null // handler function handle json response
-    }
+        "getListHandler":null, // handler function handle json response
+        "debug":false,
+        "log":function(msg){ if(this.debug) console.log(msg);} // logger
+    };
     //Global variables
     var COLOR_MAP={ // BOOTSTRAP COLOR Refrences
-            "green":"btn-success",
-            "red": "btn-danger",
-            "yellow":"btn-warning",
-            "black":"btn-inverse",
-            "blue" : "btn-primary",
-            "lightBlue":"btn-info"  
+    		"green":"btn-success",
+    		"red": "btn-danger",
+    		"yellow":"btn-warning",
+    		"black":"btn-inverse",
+    		"blue" : "btn-primary",
+    		"lightBlue":"btn-info"	
     };
     var SEARCH_CLASS="search";
     var debug=true; // added to switch on and off logging
@@ -94,10 +100,10 @@ define(function () {
         opts.divId = divId;
         opts.$bodyDiv = $bodyDiv;
         
-        console.log(opts.params);
+        opts.log(opts.params);
         //set data based on rowsPerPage
         processData(opts,function(args){
-            console.log(args.data);
+            opts.log(args.data);
             buildTableFromData(args,divId,$bodyDiv,$div,$head);
         });
         
@@ -107,7 +113,7 @@ define(function () {
                 return this;
             }
         }
-    };
+    }
     
     function buildLoadingDiv(divId,ht){
         var loading = new Array();
@@ -132,16 +138,16 @@ define(function () {
                 var size = searchOpts.size || "large";
                 var placeHolder= searchOpts.placeHolder || "";
                 if(type === "text"){
-                    var val = opts.params[def.name] || "";
-                    if(searchOpts.autocomplete){
-                        var autocompleteOpts = searchOpts.autocompleteOpts || {};
-                        autoCompleteElms[def.name]=autocompleteOpts; 
-                        if(autocompleteOpts.keyval){ // create hidden element to store key
-                            autoCompleteElms[def.name]=autocompleteOpts;
-                            var hidVal = opts.params[autocompleteOpts.keyval] || "";
-                            search.push('<input class=" " id="'+autocompleteOpts.keyval+'" type="hidden" value="'+hidVal+'"/>');
-                        }
-                    }
+                	var val = opts.params[def.name] || "";
+                	if(searchOpts.autocomplete){
+                		var autocompleteOpts = searchOpts.autocompleteOpts || {};
+                		autoCompleteElms[def.name]=autocompleteOpts; 
+                		if(autocompleteOpts.keyval){ // create hidden element to store key
+                			autoCompleteElms[def.name]=autocompleteOpts;
+                			var hidVal = opts.params[autocompleteOpts.keyval] || "";
+                			search.push('<input class=" " id="'+autocompleteOpts.keyval+'" type="hidden" value="'+hidVal+'"/>');
+                		}
+                	}
                     search.push('<input class="search input-'+size+'"  placeholder="'+placeHolder+'" id="'+def.name+'" type="text" value="'+val+'"/>')
                 }else if (type === 'dropdown'){
                     var dropDownOpts =  searchOpts.opts || {};
@@ -150,7 +156,7 @@ define(function () {
                           search.push("<option value='' > Select "+placeHolder+"</option>");
                       }
                     for(var key in dropDownOpts){
-                        var selected= (opts.params[def.name] === key) ? "selected='selected'" : "";
+                    	var selected= (opts.params[def.name] === key) ? "selected='selected'" : "";
                         search.push("<option value='"+key+"' "+selected+" >"+dropDownOpts[key]+"</option>");
                     }
                     search.push("</select>");
@@ -159,12 +165,12 @@ define(function () {
         }
         search.push('<button id="go" class="btn respo_search " type="button">Go!</button>');
         $div.html(search.join(" "));
-        console.log(autoCompleteElms);
+        opts.log(autoCompleteElms);
         for(var elName in autoCompleteElms){ // initialize autocomplete opts if any
-            var autoOpts=autoCompleteElms[elName];
-            $("input#"+elName).typeahead({
-                "source":autoOpts.source
-            });
+        	var autoOpts=autoCompleteElms[elName];
+        	$("input#"+elName).typeahead({
+        		"source":autoOpts.source
+        	});
         }
         initSearchHandlers(opts);
     }
@@ -174,9 +180,12 @@ define(function () {
             search(opts);
         });
         if(opts.searchOnEnter){
-            $(document).keypress(function(e) {
+            $(document).keyup(function(e) {
                 if(e.which == 13) { // 13 = enter key code
-                  search(opts);
+                  search(opts); // do search on enter
+                }
+                if(e.which == 27) { // 27 = esc key code
+                   $(".search").val("");  //clear search opts
                 }
             });
         }
@@ -218,7 +227,7 @@ define(function () {
         beforeAjaxCall(opts);// helper method to show loading div etc
             opts.getList(opts.params,function (response){
                 var obj= opts.getListHandler(response);
-                // console.log(obj);
+                // opts.log(obj);
                 opts.data =  obj[opts.paramNames.data];
                 opts.total = obj[opts.paramNames.total];
                 afterAjaxCall(opts); // helper method to remove loading div, cleaup.. no data msg + error reporting
@@ -256,8 +265,8 @@ define(function () {
         //hide Loading Div
         opts.$loading.hide();
         $("div#respoGridBody_"+opts.divId).show();
-        if(opts.afterGridLoad)  opts.afterGridLoad(); // after gridLoad function can be called via client
-        console.log("HERE IN AFTER BUILDING GRID");
+        if(opts.afterGridLoad)	opts.afterGridLoad(); // after gridLoad function can be called via client
+        opts.log("HERE IN AFTER BUILDING GRID");
     }
 
     function beforeBuildingGrid(opts){
@@ -265,7 +274,7 @@ define(function () {
         
         opts.$loading.show();
         $("div#respoGridBody_"+opts.divId).hide();
-        console.log("HERE IN BEFORE BUILDING GRID");
+        opts.log("HERE IN BEFORE BUILDING GRID");
    }
 
     function buildTableFromData(opts,divId,$bodyDiv,$div,$head){
@@ -286,8 +295,9 @@ define(function () {
 
         $("a.respo_expand",$table).bind("click",function(event){ event.preventDefault(); showDetails(this,opts);});
         $("a.respo_minimize",$table).bind("click",function(event){ event.preventDefault();  hideDetails(this);});
-        $("a.respo_sort_up",$head).bind("click",function(event){ event.preventDefault(); sortCol(this,opts,divId,"asc");});
-        $("a.respo_sort_down",$head).bind("click",function(event){ event.preventDefault();  sortCol(this,opts,divId,"desc");});
+        $("th.respo_sort",$head).bind("click",function(event){ sortCol(this,opts,divId);});
+//        $("a.respo_sort_up",$head).bind("click",function(event){ event.preventDefault(); sortCol(this,opts,divId,"desc");});
+//        $("a.respo_sort_down",$head).bind("click",function(event){ event.preventDefault();  sortCol(this,opts,divId,"asc");});
 
         $("a.respo_rows_per_page_change",$caption).bind("click",function(event){ event.preventDefault(); changeRowsPerPage(this,opts,$caption,divId);});
         $("select.respo_curr_page",$caption).bind("change",function(event){ pagnButtonClick(this,opts,$caption,divId);});
@@ -299,9 +309,9 @@ define(function () {
     }
     
     function initEditableCols(opts){
-        console.log(editableColsMap);
+        opts.log(editableColsMap);
         // for(var key in editableColsMap){
-            // console.log("a.respo_inline_edit_"+key);
+            // opts.log("a.respo_inline_edit_"+key);
         $("a.respo_inline_edit").click(function(event){
                 event.preventDefault();
                 var edit   = $(this);
@@ -310,11 +320,11 @@ define(function () {
                 var cancel = save.next();
                 var obj = getEditableRowCol(input);
                 var func = editableColsMap[obj.col];
-                console.log(func);
+                opts.log(func);
                 var buff = func.buff || {};
                 buff[obj.row]=input.val(); // buffer the val
                 editableColsMap[obj.col].buff=buff;
-                console.log(editableColsMap);
+                opts.log(editableColsMap);
                 showEditFieldDetails(input,save,cancel,edit);
                 if(func.onStart) func.onStart(input);
          }); 
@@ -327,7 +337,7 @@ define(function () {
                 var input = edit.parent().prev();
                 var obj = getEditableRowCol(input);
                 var func = editableColsMap[obj.col];
-                console.log(func);
+                opts.log(func);
                 var buff = func.buff || {};
                 if(!buff || !buff[obj.row]) throw "Error in initEditableCols";
                 input.val(buff[obj.row]);
@@ -344,10 +354,11 @@ define(function () {
                 var obj = getEditableRowCol(input);
                 var func = editableColsMap[obj.col];
                 var newVal = input.val();
-                // Disable al action buttons
-                // show loading
-                $("<img class='respo_inline_edit_loading' src='"+loadingGIF+"' ></img>").insertAfter(cancel);
-                func.action(newVal,opts.data[obj.row],function(json){
+             
+                var error = func.action(newVal,opts.data[obj.row],function(json){
+                	// Disable al action buttons
+                    // show loading
+                	$("<img class='respo_inline_edit_loading' src='"+loadingGIF+"' ></img>").insertAfter(cancel);
                     if(func.handler(json)) opts.data[obj.row][obj.col]=newVal;
                     else{
                         var buff = editableColsMap[obj.col].buff;
@@ -355,10 +366,12 @@ define(function () {
                         input.val(buff[obj.row]);
                     }
                     $("img.respo_inline_edit_loading").remove();
+                    //enable all actions buttons
+                    hideEditFieldDetails(input,save,cancel,edit);
+                    if(func.onFinish) func.onFinish(input);
                 });
-                //enable all actions buttons
-                hideEditFieldDetails(input,save,cancel,edit);
-                if(func.onFinish) func.onFinish(input);
+                
+                
         });
 
     }
@@ -381,16 +394,16 @@ define(function () {
         var vals = elm.attr("id").split("~");
         var row = vals.pop();
         var col = vals.pop();
-        console.log(row+"_"+col);
+        opts.log(row+"_"+col);
            
         return{
             "row":row,
-            "col":col,
+            "col":col
         }
     }
 
     function search(opts,params){
-        var divId=opts.divId;
+    	var divId=opts.divId;
         //search from ajax data 
         if(opts.source==='ajax' || opts.source === 'loadOnSearch'){
             loadingWait(opts); // avoid processing new search req when previous is loading
@@ -406,10 +419,11 @@ define(function () {
                 var $caption = $("div#resp_caption");
                 $("select.respo_curr_page",$caption).bind("change",function(event){ pagnButtonClick(this,args,$caption,divId);});
                 $("a.respo_pagn",$caption).bind("click",function(event){ event.preventDefault();  pagnButtonClick(this,args,$caption,divId);});
+
              });
         }else if(opts.source === 'local'){
             //TODO
-
+            alert("Local data search is Under Construction");
         }
         else{
             throw "Invalid Source";
@@ -423,7 +437,7 @@ define(function () {
             var id = $(this).attr("id");
             var val = $.trim($(this).val());
             if(val.length !== 0)
-                params[id]=$.trim(val);
+            	params[id]=$.trim(val);
         });
         return params;
     }
@@ -445,7 +459,7 @@ define(function () {
     }
  
     function pagnButtonClick(elm,opts,$caption,divId){
-        // // console.log($(elm).is("select"));
+        // // opts.log($(elm).is("select"));
         loadingWait(opts); // avoid processing new pagn req when previous is loading
         var $elm = $(elm);
         var elmType = $elm[0].nodeName.toLowerCase();
@@ -454,20 +468,20 @@ define(function () {
         }else{
              if($elm.parent().attr("class") === 'disabled') return; // do nothing for a disabled button
              if($elm.html() === "Next"){
-                    opts.page++; // console.log("next");
+                    opts.page++; // opts.log("next");
              }   
              else {
-                opts.page--;// console.log("previous");
+                opts.page--;// opts.log("previous");
              }
              $("select.respo_curr_page",$caption).val(opts.page);                        
         }
-        // console.log("PagnButtonClick");
-        // console.log(opts.page);
-        // console.log(opts.rowsPerPage);
+        // opts.log("PagnButtonClick");
+        // opts.log(opts.page);
+        // opts.log(opts.rowsPerPage);
         processData(opts,function(args){
             /*var tableBody = $("table#body_"+divId);
             updateGrid(args,tableBody);*/
-            // console.log(opts.data);
+            // opts.log(opts.data);
             reBuildBody(args,divId);
             enableDisablePagnButtons(args,$caption);   
         });
@@ -484,11 +498,11 @@ define(function () {
          });
          
          if(opts.page === opts.getTotalPages()){
-            // console.log("Disable Next");
+            // opts.log("Disable Next");
             next.attr("class","disabled"); // disable next
          }  
          else if(opts.page === 1){
-            // console.log("Disable Previous");
+            // opts.log("Disable Previous");
             previous.attr("class","disabled"); // disable previous
          }                
     }
@@ -496,7 +510,7 @@ define(function () {
     function getLocalData(opts){
             var i = (opts.page -1) * opts.rowsPerPage;
             var j = ((i+opts.rowsPerPage) < opts.localData.length) ? i+opts.rowsPerPage : opts.localData.length;
-            // console.log(i+"_"+j);
+            // opts.log(i+"_"+j);
             return opts.localData.slice(i,j);
     }
     
@@ -524,7 +538,7 @@ define(function () {
         pagn.push('<button class="btn  btn-small disabled"><b>Dislplay Records : ');// TODO remove inline styling
         pagn.push('<span id="respo_rows_per_page_val">'+opts.pageOpts[0]+'</span>');
         pagn.push('</b></button>');
-        pagn.push('<button class="btn  btn-small dropdown-toggle " style="height: 26px;" data-toggle="dropdown">');
+        pagn.push('<button class="btn  btn-small dropdown-toggle "  data-toggle="dropdown">');
         pagn.push('<span class="caret"></span>');
         pagn.push('</button>');
         pagn.push('<ul class="dropdown-menu" style="left:90px;min-width:15px;">');// TODO remove the hardcode left and min-widht value
@@ -550,22 +564,22 @@ define(function () {
         actions.push('<div id="respo_actions" class="pull-right" style="margin-right:10px;">');
         
         for(var i=0,len=acts.length; i<len; i++){
-            var color = acts[i].color || "red";
-            color = COLOR_MAP[color] ;
-            console.log(color);
-            if(acts[i].modal){
-                
-                actions.push('<a href="#'+acts[i].modal+'" role="button" class="respo_btns btn '+color+' btn-small" data-toggle="modal" data-loading-text="'+acts[i].loading+'">')
-                actions.push("<i class='icon "+acts[i].icon+"'> </i>&nbsp;")
-                actions.push(acts[i].label);
-                actions.push('</a>');
-            }else{
+        	var color = acts[i].color || "";
+        	color = COLOR_MAP[color] ;
+        	opts.log(color);
+        	if(acts[i].modal){
+        		
+        		actions.push('<a href="#'+acts[i].modal+'" role="button" class="respo_btns btn '+color+' btn-small" data-toggle="modal" data-loading-text="'+acts[i].loading+'">')
+        		actions.push("<i class='icon "+acts[i].icon+"'> </i>&nbsp;")
+        		actions.push(acts[i].label);
+        		actions.push('</a>');
+        	}else{
                 actionHandlerMap[acts[i].name]= acts[i].action; // used in click Handler to prevent array looping to lookup the action for button clicked
                 actions.push('<button id="'+acts[i].name+'" class="respo_btns btn '+color+' btn-small" data-loading-text="'+acts[i].loading+'">');
                 actions.push("<i class='icon "+acts[i].icon+"'> </i>&nbsp;")
                 actions.push(acts[i].label);
                 actions.push('</button>');
-            }
+        	}
     
         }
         actions.push('  </div> ');
@@ -631,24 +645,59 @@ define(function () {
     }
   
   
-    function sortCol(elm,opts,divId,dir){
-      loadingWait(opts); // avoid processing new sort req when previous is loading
-      var tableBody = $("table#body_"+divId);
-      var col = $(elm).attr("id");
-      col = col.substring(0,col.length-3);  
-      removeDetailsWindow();
-      if(opts.source === "local"){
-        var data = opts.localData;
-        data.sort(function(a,b){return sort(a,b,col,dir)});  
-      }else{ // ajax call
-        opts.sortCol=col; // update params used in making getListReq
-        opts.sortDir=dir; // update params used in making getListreq
-      }
-      processData(opts, function(args){
-          updateGrid(args,tableBody);
-      });
+    function sortCol(elm,opts,divId){
+    	var dir="asc";
+    	loadingWait(opts); // avoid processing new sort req when previous is loadingv
+    	var prevHeader =$("th.respo_header_active");
+    	prevHeader.attr("class",prevHeader.attr("class").replace("respo_header_active",""));
+    	$(elm).attr("class",$(elm).attr("class")+" respo_header_active");
+    	var sortElm = $("a.respo_sort_active",$(elm));
+    	if(sortElm.length === 0){
+    		$("a.respo_sort_icon").hide();
+    		$("a.respo_sort_active").attr("class", $("a.respo_sort_active").attr("class").replace("respo_sort_active",""));
+    		elm = $("a.respo_sort_up",$(elm));
+    		elm.attr("class",elm.attr("class")+" respo_sort_active ");
+    		elm.show();
+    	}else{
+    		sortElm.attr("class", sortElm.attr("class").replace("respo_sort_active",""));
+    		sortElm.hide();
+    		if(sortElm.attr("class").match("respo_sort_up")){
+    			dir="desc";
+    			elm=sortElm.next();
+    		}else{
+    			dir="asc";
+    			elm=sortElm.prev();
+    		}
+    		elm.attr("class",elm.attr("class")+" respo_sort_active ");
+    		elm.show();
+    	}
+    	var tableBody = $("table#body_"+divId);
+    	var col = $(elm).attr("id");
+    	col = col.substring(0,col.length-3);
+    	removeDetailsWindow();
+    	if(opts.source === "local"){
+    		var data = opts.localData;
+    		data.sort(function(a,b){return sort(a,b,col,dir)});  
+    	}else{ // ajax call
+    		opts.sortCol=col; // update params used in making getListReq
+    		opts.sortDir=dir; // update params used in making getListreq
+    	}
+    	processData(opts, function(args){
+    		updateGrid(args,tableBody);
+    	});
     }
 
+    function toggleSortCols(elm,divId,dir){
+    	$(elm).hide();
+    	opts.log($(elm).next());
+    	if(dir === 'asc'){
+    		$(elm).next().show();
+    	}else{
+    		$(elm).prev().show();
+    	}
+    	
+    }
+    
     function removeDetailsWindow(){
       $("a.respo_minimize").hide();
       $("tr.respo_details_row").remove();
@@ -715,12 +764,13 @@ define(function () {
     function resize($table,opts){
         var colDefs = opts.colDefs;
         var windowWidth=$(window).innerWidth();
-//         console.log(windowWidth);
-//         console.log("tableWidth"+totalWidth)
+        var col = null;
+//         opts.log(windowWidth);
+//         opts.log("tableWidth"+totalWidth)
         if(totalWidth<= windowWidth){
             //show hidden columns in hidden Columns list
             while(hiddenCols.length >0){
-                var col = hiddenCols.pop(0);
+                col = hiddenCols.pop(0);
                 if(totalWidth+col.minWidth > windowWidth){
                     hiddenCols.push(col);
                     break;
@@ -732,7 +782,7 @@ define(function () {
         } else{
             // hide columns in hideable columns list
             while(hideableCols.length >0){
-                var col = hideableCols.pop(0);
+                col = hideableCols.pop(0);
                 $("."+col.name).hide();
                 hiddenCols.push(col);
                 totalWidth -= col.minWidth;
@@ -761,11 +811,11 @@ define(function () {
             
     function updateGrid(opts, $elm){
         var data= opts.data;
-        // // console.log($elm);
+        // // opts.log($elm);
         var $tbody = $elm.find("tbody");
         // log($tbody.html());
         var $tr = $tbody.find("tr:first");
-         // console.log($tr);
+         // opts.log($tr);
         for(var i=0; i<opts.data.length; i++){
             var row= data[i];
             // if(row.id) $tr.attr("id",row.id);
@@ -786,7 +836,7 @@ define(function () {
     }
 
     function reBuildBody(opts,divId){
-         // console.log(divId);
+         // opts.log(divId);
         var $table = $("table#body_"+divId);
         // $table.html("Loading... ");
         var table = new Array();
@@ -796,6 +846,7 @@ define(function () {
         $("a.respo_expand",$table).bind("click",function(event){ event.preventDefault(); showDetails(this,opts);});
         $("a.respo_minimize",$table).bind("click",function(event){ event.preventDefault();  hideDetails(this);});
         resize($table,opts);
+        initEditableCols(opts);
     }
     
     function isHidden(name){
@@ -806,8 +857,9 @@ define(function () {
         return false;
     }
     function buildBody(table,opts,rebuildFlag){
+    	
         table.push('<tbody>');
-         // console.log("Build Body "+opts.data.length);
+//          opts.log("Build Body "+opts.data.length);
         if(opts.data.length === 0){
             var colSpan = opts.colDefs.length-hiddenCols.length;
             table.push("<tr id='"+id+"' class='mainRow'>");
@@ -838,7 +890,7 @@ define(function () {
                     editableColsMap[def.name]=editOpts;
                     table.push('<div class="input-append ">');
                     table.push("<input id='respo_inline_edit_content~"+def.name+"~"+i+"' type='text' readonly='readonly' class='input-"+size+" respo_inline_edit_content_"+def.name+"' value='");
-                    table.push((def.format)? def.format(row[def.name],row) : row[def.name]);                
+                    table.push((def.format)? def.format(row[def.name],row) : row[def.name]);
                     table.push("'/>");
                     table.push('<span class="add-on">');
                     table.push("&nbsp;<a href='#' class='respo_inline_edit icon-edit ' title='Edit'   >&nbsp;</a>");    
@@ -855,7 +907,7 @@ define(function () {
             table.push("</tr>");
         }
         table.push('</tbody>');                 
-//      // console.log(table.join());
+//      // opts.log(table.join());
     }
 
     function buildHeader(table,opts){
@@ -871,21 +923,36 @@ define(function () {
             }
             totalWidth += (wt + columnPadding + pad);  // 17px default header cellp adding by bootstrap
             if(def.hideable)hideableCols.push(def);
-            table.push('<th class=" bluebackdrop '+def.name+'" style="word-wrap:break-word;width:'+wt+'px;'+padding+'" >');
+            var cursor = "", sortClazz="",activeClazz="";
+            if(def.sort){
+            	cursor= "cursor:pointer;";
+            	sortClazz= "respo_sort";
+            	if(opts.sortCol === def.name) 	activeClazz="respo_header_active";
+            }
+            table.push('<th class=" respo_header_backdrop '+def.name+' '+sortClazz+'  '+activeClazz+'" style="'+cursor+'word-wrap:break-word;width:'+wt+'px;'+padding+'" >');
             
             table.push(def.label);
             
             if(def.sort){
-                var hideAsc="",hideDesc="";
-                table.push("&nbsp;&nbsp;<span><a href='#' id='"+def.name+"Asc' class='respo_sort_up icon-chevron-up icon-white'  "+hideAsc+">&nbsp;</a>" );
-                table.push("<a href='#' id='"+def.name+"Dsc' class='respo_sort_down icon-chevron-down icon-white ' "+hideDesc+">&nbsp;</a>" );
+            	
+                var hideAsc="style='display:none;'",hideDesc="style='display:none;'", sortActiveAsc="",sortActiveDesc="";
+                if(opts.sortCol === def.name){
+             
+                	if(opts.sortDir === 'asc')	{ 	hideAsc="";  sortActiveAsc=" respo_sort_active " }
+                	else 						{   hideDesc=""; sortActiveDesc=" respo_sort_active "}
+                }
+                table.push("&nbsp;&nbsp;<span><a href='#' id='"+def.name+"Asc' class=' "+sortActiveAsc+" respo_sort_icon respo_sort_up icon-chevron-up icon-white'  "+hideAsc+">&nbsp;</a>" );
+                table.push("<a href='#' id='"+def.name+"Dsc' class=' "+sortActiveDesc+" respo_sort_icon respo_sort_down icon-chevron-down icon-white ' "+hideDesc+">&nbsp;</a>" );
             } 
             table.push('</th>');
         }
         table.push("</tr>");
         table.push("</thead>");
 
-        hideableCols.sort(function(a,b){ return sort(a,b,"minWidth","asc");}); // sort by minWidth desc
+        hideableCols.sort(function(a,b){
+            var val = a.priority - b.priority
+            return (val === 0) ? (a.minWidth - b.minWidth) : val;
+        }); // sort by minWidth desc
     }
 
     
@@ -897,16 +964,16 @@ define(function () {
 
     function _validate(opts){
 
-        if(opts.params){
-            var p = {};
-            for(var param in opts.params){
-                var val = opts.params[param];
-                if($.trim(val).length !== 0) // remove empty val
-                    p[param] = val;  
-            }
-            opts.params =p;
+    	if(opts.params){
+        	var p = {};
+        	for(var param in opts.params){
+        		var val = opts.params[param];
+        		if($.trim(val).length !== 0) // remove empty val
+        			p[param] = val;  
+        	}
+        	opts.params =p;
         }
-        
+    	
         if(opts.source === 'local'){
             if(!opts.page) opts.page=1;
             if(!opts.rowsPerPage) opts.rowsPerPage=opts.localData.length;
@@ -927,14 +994,13 @@ define(function () {
 //
 //    function log(obj){
 //        if(!debug) return;
-//        // // console.log("Being called from"+arguments.callee.caller.toString())
-//        if(console && log)  // console.log(obj);
+//        // // opts.log("Being called from"+arguments.callee.caller.toString())
+//        if(console && log)  // opts.log(obj);
 //        else    alert(obj.toString());
 //    }
 
     return{
         getInstance: getInstance // initialize respoTable
-
     }
 
 

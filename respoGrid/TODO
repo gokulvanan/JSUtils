@@ -1,23 +1,14 @@
 TODO
 
 
--Scroll capabiliy -DONE
-- Sorting - DONE
-- Pagination - DONE
-- AJAX JSON load (pagination+sorting) -DONE
 
-- Action Button integration - DONE
-- AJAX Search integration - Done 
-- Alignment issue with columns due to width Map issue.. use differnt logic in resize for totalwidth - done
-- AJAX Loding GIF - DONE
-
-- LoadOnce/LoadOnSearch options TO be tested -- need to write doucmentation
+- escape to erase search optsion -done
+- search on enter to be validated
+- truncate tool tip add on
+- webstore cache and webworker
 - Local Search - WIP
 - Need to add more test cases
-
-
 - still have minor alignment lapse to investigate on this
-- sort button font changes 
 - utility code for checkboxes etc.. - done to be intergated
 - performance check
 - Code cleanup 
